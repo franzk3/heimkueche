@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>B & F</title>
+  <title>Bella & Franz</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -40,7 +40,7 @@
     <div class="max-w-2xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-2">
         <span class="text-2xl">🍲</span>
-        <h1 class="text-lg font-bold tracking-tight text-stone-900">B & F</h1>
+        <h1 class="text-lg font-bold tracking-tight text-stone-900">Bella & Franz</h1>
       </div>
       <button onclick="manualSync()" id="sync-badge" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-stone-100 text-stone-600 border border-stone-200 active:scale-95 transition-all">
         <span id="sync-dot" class="w-2 h-2 rounded-full bg-stone-400"></span>
@@ -98,7 +98,7 @@
             <span>⚡</span> Auto-Plan
           </button>
           <button onclick="generateShoppingListFromPlan()" class="bg-herb-600 hover:bg-herb-700 active:scale-95 text-white text-xs font-semibold px-3 py-2 rounded-xl flex items-center gap-1.5 shadow-sm">
-            <span>🛒</span> In Liste
+            <span>🛒</span> In Vorbereitung
           </button>
         </div>
       </div>
@@ -106,38 +106,51 @@
       <div id="week-grid" class="space-y-2.5"></div>
     </section>
 
-    <!-- TAB 4: EINKAUFSLISTE -->
+    <!-- TAB 4: EINKAUFSLISTE (2-STUFIG) -->
     <section id="tab-groceries" class="tab-content space-y-4">
       <div class="flex items-center justify-between">
         <h2 class="font-bold text-stone-900 text-base">Einkaufsliste</h2>
-        <button onclick="clearCheckedGroceries()" class="text-xs text-stone-500 hover:text-stone-800 font-medium">Abgehakte löschen</button>
+        <div class="flex items-center gap-2">
+          <button id="btn-back-to-staging" onclick="backToStaging()" class="hidden text-xs text-stone-500 hover:text-stone-800 font-medium">← Zurück zur Übersicht</button>
+          <button id="btn-clear-groceries" onclick="clearCheckedGroceries()" class="text-xs text-stone-500 hover:text-stone-800 font-medium">Abgehakte löschen</button>
+        </div>
       </div>
 
-      <!-- Liste mit allen bekannten Zutaten für Auto-Vervollständigung -->
-<datalist id="known-ingredients-list"></datalist>
-      <!-- Manuelle Eingabe mit Einheiten-Dropdown -->
-      <form onsubmit="addGroceryManual(event)" class="grid grid-cols-12 gap-2 bg-white p-2.5 rounded-xl border border-stone-200 shadow-sm">
-        <input type="number" step="any" id="grocery-amount-input" placeholder="Menge" class="col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none">
-        <select id="grocery-unit-input" class="col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none text-stone-700">
-          <option value="">(keine)</option>
-          <option value="g">g</option>
-          <option value="kg">kg</option>
-          <option value="ml">ml</option>
-          <option value="l">l</option>
-          <option value="TL">TL</option>
-          <option value="EL">EL</option>
-          <option value="Prise">Prise</option>
-          <option value="Stk">Stk</option>
-          <option value="Zehe(n)">Zehe(n)</option>
-          <option value="Dose(n)">Dose(n)</option>
-          <option value="Bund">Bund</option>
-          <option value="Pkg">Pkg</option>
-        </select>
-        <input type="text" id="grocery-name-input" placeholder="Artikelname..." required class="col-span-5 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none">
-        <button type="submit" class="col-span-1 bg-brand-600 text-white font-bold rounded-lg text-sm flex items-center justify-center active:scale-95">+</button>
-      </form>
+      <!-- STUFE 1: Nach Rezepten gruppiert (Prüf-Modus) -->
+      <div id="staging-view" class="space-y-4">
+        <div id="staging-recipes-container" class="space-y-3"></div>
 
-      <div id="grocery-list" class="space-y-1.5"></div>
+        <button onclick="consolidateGroceriesForShopping()" id="btn-go-shopping" class="w-full bg-herb-600 hover:bg-herb-700 active:scale-95 text-white font-bold py-3.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
+          <span>🛒</span> Ich gehe einkaufen (Zusammenfassen)
+        </button>
+      </div>
+
+      <!-- STUFE 2: Manuelle Eingabe & kombinierte Liste (Einkaufs-Modus) -->
+      <div id="shopping-view" class="hidden space-y-4">
+        <datalist id="known-ingredients-list"></datalist>
+        <form onsubmit="addGroceryManual(event)" class="grid grid-cols-12 gap-2 bg-white p-2.5 rounded-xl border border-stone-200 shadow-sm">
+          <input type="number" step="any" id="grocery-amount-input" placeholder="Menge" class="col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none">
+          <select id="grocery-unit-input" class="col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none text-stone-700">
+            <option value="">(keine)</option>
+            <option value="g">g</option>
+            <option value="kg">kg</option>
+            <option value="ml">ml</option>
+            <option value="l">l</option>
+            <option value="TL">TL</option>
+            <option value="EL">EL</option>
+            <option value="Prise">Prise</option>
+            <option value="Stk">Stk</option>
+            <option value="Zehe(n)">Zehe(n)</option>
+            <option value="Dose(n)">Dose(n)</option>
+            <option value="Bund">Bund</option>
+            <option value="Pkg">Pkg</option>
+          </select>
+          <input type="text" list="known-ingredients-list" id="grocery-name-input" placeholder="Artikelname..." required class="col-span-5 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none">
+          <button type="submit" class="col-span-1 bg-brand-600 text-white font-bold rounded-lg text-sm flex items-center justify-center active:scale-95">+</button>
+        </form>
+
+        <div id="grocery-list" class="space-y-1.5"></div>
+      </div>
     </section>
   </main>
 
@@ -213,20 +226,20 @@
           </div>
         </div>
 
-       <div>
-  <div class="flex items-center justify-between mb-2">
-    <h4 class="text-xs font-bold uppercase tracking-wider text-stone-400">Zutaten</h4>
-    <button type="button" onclick="addSelectedIngredientsToGrocery()" class="text-xs font-semibold bg-herb-50 text-herb-600 hover:bg-herb-100 border border-herb-200 px-2.5 py-1 rounded-lg flex items-center gap-1 active:scale-95 transition-all">
-      <span>🛒</span> Ausgewählte zur Liste
-    </button>
-  </div>
-  <p class="text-[11px] text-stone-400 mb-2">Häkchen entfernen bei Zutaten, die du schon zu Hause hast.</p>
-  <ul id="detail-ingredients" class="space-y-1.5 text-sm"></ul>
-</div>
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-stone-400">Zutaten</h4>
+            <button type="button" onclick="addSelectedIngredientsToGrocery()" class="text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-lg flex items-center gap-1 active:scale-95 transition-all">
+              <span>🛒</span> In Vorbereitung
+            </button>
+          </div>
+          <p class="text-[11px] text-stone-400 mb-2">Häkchen abwählen bei Zutaten, die du schon vorrätig hast.</p>
+          <ul id="detail-ingredients" class="space-y-1.5 text-sm"></ul>
+        </div>
 
         <div>
-          <h4 class="text-xs font-bold uppercase tracking-wider text-stone-400 mb-2">Zubereitung</h4>
-          <div id="detail-steps" class="space-y-2 text-sm text-stone-700 leading-relaxed whitespace-pre-line"></div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-stone-400 mb-3">Zubereitung</h4>
+          <div id="detail-steps" class="space-y-3"></div>
         </div>
       </div>
     </div>
@@ -299,17 +312,18 @@
           </button>
         </div>
 
-      <!-- Dynamische Zubereitungsschritte -->
-<div>
-  <div class="flex items-center justify-between mb-1.5">
-    <label class="block text-xs font-bold text-stone-600">Zubereitungsschritte</label>
-    <span class="text-[10px] text-stone-400">Schritt für Schritt</span>
-  </div>
-  <div id="form-steps-rows" class="space-y-2 mb-2"></div>
-  <button type="button" onclick="addStepRow()" class="w-full py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold text-xs rounded-xl transition-all">
-    + Schritt hinzufügen
-  </button>
-</div>
+        <!-- Dynamische Zubereitungsschritte -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="block text-xs font-bold text-stone-600">Zubereitungsschritte</label>
+            <span class="text-[10px] text-stone-400">Schritt für Schritt</span>
+          </div>
+          <div id="form-steps-rows" class="space-y-2 mb-2"></div>
+          <button type="button" onclick="addStepRow()" class="w-full py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold text-xs rounded-xl transition-all">
+            + Schritt hinzufügen
+          </button>
+        </div>
+
         <div class="flex gap-2 pt-2">
           <button type="button" id="btn-delete-recipe" onclick="deleteCurrentRecipe()" class="hidden flex-1 bg-red-50 text-red-600 font-semibold py-3 rounded-xl active:scale-95">Löschen</button>
           <button type="submit" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl shadow-md active:scale-95">Speichern</button>
@@ -326,7 +340,7 @@
     // ⚙️ HIER DEINE JSONBIN-DATEN EINTRAGEN:
     // ==========================================
     const JSONBIN_ID = "6adb8714ffd5d160538623fd";
-    const JSONBIN_KEY = "$2a$10$y6kyGrnoX1xkRVsn1h44puSeCqiClneLZpxA.4P4JsubFVZ3o8q8i";
+    const JSONBIN_KEY = "$2a$10$y6kyGrnoX1xkRVsn1h44puSeCqiClneLZpxA.4P4JsubFVZ3o8q8i"; // Hier deinen X-Access-Key eintragen!
     const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
 
     const DAYS = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
@@ -349,7 +363,9 @@
       recipes: [],
       plan: {},
       excludedDays: [],
-      groceries: []
+      stagingRecipes: [],
+      groceries: [],
+      isShoppingMode: false
     };
 
     let activeFilter = 'all';
@@ -386,7 +402,9 @@
           if (Array.isArray(data.record.categories) && data.record.categories.length > 0) state.categories = data.record.categories;
           if (data.record.plan) state.plan = data.record.plan;
           if (Array.isArray(data.record.excludedDays)) state.excludedDays = data.record.excludedDays;
+          if (Array.isArray(data.record.stagingRecipes)) state.stagingRecipes = data.record.stagingRecipes;
           if (Array.isArray(data.record.groceries)) state.groceries = data.record.groceries;
+          if (typeof data.record.isShoppingMode === 'boolean') state.isShoppingMode = data.record.isShoppingMode;
 
           saveLocalData();
           renderAll();
@@ -431,9 +449,9 @@
       dot.className = "w-2 h-2 rounded-full " + (status === 'online' ? "bg-emerald-500 animate-pulse" : (status === 'loading' ? "bg-amber-400" : "bg-stone-400"));
     }
 
-    // --- LOKALE DATEN & DEFAULT REZEPTE ---
+    // --- LOKALE DATEN & DEFAULTS ---
     function loadLocalData() {
-      const stored = localStorage.getItem("heimkueche_data_v5");
+      const stored = localStorage.getItem("heimkueche_data_v6");
       if (stored) {
         try { 
           state = Object.assign(state, JSON.parse(stored)); 
@@ -456,7 +474,12 @@
             { amount: 2, unit: "Zehe(n)", name: "Knoblauch" },
             { amount: 100, unit: "g", name: "Sahne" }
           ],
-          steps: "1. Zwiebeln und Knoblauch hacken und kurz anbraten.\n2. Tomaten, 700ml Brühe und Nudeln in den Topf geben.\n3. 10 Minuten köcheln lassen, bis die Nudeln gar sind.\n4. Sahne unterrühren und abschmecken."
+          steps: [
+            "Zwiebeln und Knoblauch fein hacken und kurz in einem großen Topf anbraten.",
+            "Gehackte Tomaten, ca. 700ml Gemüsebrühe und die ungekochten Nudeln hinzugeben.",
+            "Alles ca. 10 Minuten köcheln lassen, bis die Pasta die Flüssigkeit aufgenommen hat.",
+            "Sahne unterrühren und mit Salz, Pfeffer und Basilikum abschmecken."
+          ]
         },
         {
           id: "2",
@@ -471,16 +494,23 @@
             { amount: 200, unit: "g", name: "Basmatireis" },
             { amount: 2, unit: "Zehe(n)", name: "Knoblauch" }
           ],
-          steps: "1. Reis kochen.\n2. Knoblauch anbraten, Kokosmilch und Kichererbsen zugeben.\n3. 10 Minuten köcheln lassen."
+          steps: [
+            "Reis nach Packungsanleitung gar kochen.",
+            "Knoblauch anbraten, Kokosmilch, Currypulver und abgetropfte Kichererbsen zugeben.",
+            "Etwa 10 Minuten cremig einköcheln lassen und mit Reis anrichten."
+          ]
         }
       ];
       state.plan = { "Montag": "1", "Dienstag": "2" };
       state.excludedDays = ["Sonntag"];
+      state.stagingRecipes = [];
+      state.groceries = [];
+      state.isShoppingMode = false;
       saveLocalData();
     }
 
     function saveLocalData() {
-      localStorage.setItem("heimkueche_data_v5", JSON.stringify(state));
+      localStorage.setItem("heimkueche_data_v6", JSON.stringify(state));
     }
 
     function renderAll() {
@@ -590,74 +620,66 @@
       });
     }
 
-    // --- STRUKTURIERTE ZUTATENZEILEN ---
-  function addIngredientRow(amount = "", unit = "", name = "") {
-  const container = document.getElementById('form-ingredients-rows');
-  const rowIndex = container.children.length;
-  const example = INGREDIENT_EXAMPLES[rowIndex % INGREDIENT_EXAMPLES.length];
+    // --- ZUTATEN- & SCHRITTZEILEN IM FORMULAR ---
+    function addIngredientRow(amount = "", unit = "", name = "") {
+      const container = document.getElementById('form-ingredients-rows');
+      const rowIndex = container.children.length;
+      const example = INGREDIENT_EXAMPLES[rowIndex % INGREDIENT_EXAMPLES.length];
 
-  const unitOptionsHtml = UNITS.map(u => {
-    const label = u === "" ? "(keine)" : u;
-    const selected = (unit === u || (!unit && u === example.unit && amount === "")) ? "selected" : "";
-    return `<option value="${u}" ${selected}>${label}</option>`;
-  }).join('');
+      const unitOptionsHtml = UNITS.map(u => {
+        const label = u === "" ? "(keine)" : u;
+        const selected = (unit === u || (!unit && u === example.unit && amount === "")) ? "selected" : "";
+        return `<option value="${u}" ${selected}>${label}</option>`;
+      }).join('');
 
-  const row = document.createElement('div');
-  row.className = "ingredient-row grid grid-cols-12 gap-1.5 items-center";
-  row.innerHTML = `
-    <input type="number" step="any" placeholder="${example.amount}" value="${amount}" class="ing-amount col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">
-    <select class="ing-unit col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 text-stone-700">
-      ${unitOptionsHtml}
-    </select>
-    <input type="text" list="known-ingredients-list" placeholder="${example.name}" value="${name}" required class="ing-name col-span-5 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">
-    <button type="button" onclick="this.parentElement.remove()" class="col-span-1 text-stone-400 hover:text-red-500 font-bold text-lg leading-none text-center">&times;</button>
-  `;
-  container.appendChild(row);
-}
+      const row = document.createElement('div');
+      row.className = "ingredient-row grid grid-cols-12 gap-1.5 items-center";
+      row.innerHTML = `
+        <input type="number" step="any" placeholder="${example.amount}" value="${amount}" class="ing-amount col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">
+        <select class="ing-unit col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 text-stone-700">
+          ${unitOptionsHtml}
+        </select>
+        <input type="text" list="known-ingredients-list" placeholder="${example.name}" value="${name}" required class="ing-name col-span-5 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">
+        <button type="button" onclick="this.parentElement.remove()" class="col-span-1 text-stone-400 hover:text-red-500 font-bold text-lg leading-none text-center">&times;</button>
+      `;
+      container.appendChild(row);
+    }
 
-    // --- DYNAMISCHE SCHRITTE ---
-function addStepRow(text = "") {
-  const container = document.getElementById('form-steps-rows');
-  const stepNumber = container.children.length + 1;
+    function updateIngredientsDatalist() {
+      const datalist = document.getElementById('known-ingredients-list');
+      if (!datalist) return;
+      const names = new Set();
+      state.recipes.forEach(r => {
+        if (r.ingredients) {
+          r.ingredients.forEach(i => {
+            const val = typeof i === 'string' ? i : i.name;
+            if (val && val.trim()) names.add(val.trim());
+          });
+        }
+      });
+      datalist.innerHTML = Array.from(names).sort().map(name => `<option value="${name}"></option>`).join('');
+    }
 
-  const row = document.createElement('div');
-  row.className = "step-row flex items-start gap-2";
-  row.innerHTML = `
-    <span class="step-num w-6 h-8 flex items-center justify-center rounded-lg bg-stone-200 text-stone-700 text-xs font-bold flex-shrink-0 mt-0.5">${stepNumber}</span>
-    <textarea rows="2" required placeholder="Was ist in Schritt ${stepNumber} zu tun?" class="step-text flex-1 bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">${text}</textarea>
-    <button type="button" onclick="removeStepRow(this)" class="w-6 h-8 text-stone-400 hover:text-red-500 font-bold text-lg flex items-center justify-center leading-none mt-0.5">&times;</button>
-  `;
-  container.appendChild(row);
-}
+    function addStepRow(text = "") {
+      const container = document.getElementById('form-steps-rows');
+      const stepNumber = container.children.length + 1;
 
-function removeStepRow(btn) {
-  btn.closest('.step-row').remove();
-  // Nummern nach dem Löschen neu durchzählen
-  document.querySelectorAll('#form-steps-rows .step-row').forEach((row, idx) => {
-    row.querySelector('.step-num').innerText = idx + 1;
-  });
-}
+      const row = document.createElement('div');
+      row.className = "step-row flex items-start gap-2";
+      row.innerHTML = `
+        <span class="step-num w-6 h-8 flex items-center justify-center rounded-lg bg-stone-200 text-stone-700 text-xs font-bold flex-shrink-0 mt-0.5">${stepNumber}</span>
+        <textarea rows="2" required placeholder="Was ist in Schritt ${stepNumber} zu tun?" class="step-text flex-1 bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">${text}</textarea>
+        <button type="button" onclick="removeStepRow(this)" class="w-6 h-8 text-stone-400 hover:text-red-500 font-bold text-lg flex items-center justify-center leading-none mt-0.5">&times;</button>
+      `;
+      container.appendChild(row);
+    }
 
-    // Aktualisiert die Vorschlagsliste aus allen gespeicherten Rezepten
-function updateIngredientsDatalist() {
-  const datalist = document.getElementById('known-ingredients-list');
-  if (!datalist) return;
-  
-  const names = new Set();
-  state.recipes.forEach(r => {
-    if (r.ingredients) {
-      r.ingredients.forEach(i => {
-        const val = typeof i === 'string' ? i : i.name;
-        if (val && val.trim()) names.add(val.trim());
+    function removeStepRow(btn) {
+      btn.closest('.step-row').remove();
+      document.querySelectorAll('#form-steps-rows .step-row').forEach((row, idx) => {
+        row.querySelector('.step-num').innerText = idx + 1;
       });
     }
-  });
-
-  datalist.innerHTML = Array.from(names)
-    .sort()
-    .map(name => `<option value="${name}"></option>`)
-    .join('');
-}
 
     // --- REZEPTE RENDERN ---
     function renderRecipes() {
@@ -727,14 +749,16 @@ function updateIngredientsDatalist() {
       document.getElementById('detail-time').innerText = `⏱️ ${r.time} Min`;
       document.getElementById('detail-tags').innerText = (r.tags || []).join(' • ');
       document.getElementById('detail-servings').innerText = r.servings;
-const stepsContainer = document.getElementById('detail-steps');
-const stepsData = Array.isArray(r.steps) ? r.steps : (r.steps || "").split('\n').filter(s => s.trim());
-stepsContainer.innerHTML = stepsData.map((step, idx) => `
-  <div class="flex items-start gap-3">
-    <span class="w-6 h-6 rounded-full bg-brand-50 text-brand-600 font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">${idx + 1}</span>
-    <p class="text-stone-700 text-sm leading-relaxed">${step.replace(/^\d+[\.\)]\s*/, '')}</p>
-  </div>
-`).join('');
+
+      // Schritte ausgeben
+      const stepsContainer = document.getElementById('detail-steps');
+      const stepsData = Array.isArray(r.steps) ? r.steps : (r.steps || "").split('\n').filter(s => s.trim());
+      stepsContainer.innerHTML = stepsData.map((step, idx) => `
+        <div class="flex items-start gap-3">
+          <span class="w-6 h-6 rounded-full bg-brand-50 text-brand-600 font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">${idx + 1}</span>
+          <p class="text-stone-700 text-sm leading-relaxed">${step.replace(/^\d+[\.\)]\s*/, '')}</p>
+        </div>
+      `).join('');
 
       renderIngredientsList();
       openModal('detail-modal');
@@ -750,62 +774,30 @@ stepsContainer.innerHTML = stepsData.map((step, idx) => `
       renderIngredientsList();
     }
 
-  function renderIngredientsList() {
-  const ul = document.getElementById('detail-ingredients');
-  ul.innerHTML = "";
-  currentDetailRecipe.ingredients.forEach((ing, idx) => {
-    let text = "";
-    if (typeof ing === 'string') {
-      text = ing;
-    } else {
-      const amt = ing.amount ? (Math.round((ing.amount * currentServingsFactor) * 10) / 10) : "";
-      text = `${amt} ${ing.unit || ''} ${ing.name}`.trim();
+    function renderIngredientsList() {
+      const ul = document.getElementById('detail-ingredients');
+      ul.innerHTML = "";
+      currentDetailRecipe.ingredients.forEach((ing, idx) => {
+        let text = "";
+        if (typeof ing === 'string') {
+          text = ing;
+        } else {
+          const amt = ing.amount ? (Math.round((ing.amount * currentServingsFactor) * 10) / 10) : "";
+          text = `${amt} ${ing.unit || ''} ${ing.name}`.trim();
+        }
+
+        const li = document.createElement('li');
+        li.className = "recipe-ing-item";
+        li.dataset.index = idx;
+        li.innerHTML = `
+          <label class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-stone-50 cursor-pointer select-none">
+            <input type="checkbox" checked onchange="this.nextElementSibling.classList.toggle('line-through', !this.checked); this.nextElementSibling.classList.toggle('text-stone-300', !this.checked); this.nextElementSibling.classList.toggle('text-stone-700', this.checked)" class="ing-select-checkbox rounded border-stone-300 text-brand-600 focus:ring-0">
+            <span class="text-stone-700 transition-colors">${text}</span>
+          </label>
+        `;
+        ul.appendChild(li);
+      });
     }
-
-    const li = document.createElement('li');
-    li.className = "recipe-ing-item";
-    li.dataset.index = idx;
-    li.innerHTML = `
-      <label class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-stone-50 cursor-pointer select-none">
-        <input type="checkbox" checked onchange="this.nextElementSibling.classList.toggle('line-through', !this.checked); this.nextElementSibling.classList.toggle('text-stone-300', !this.checked); this.nextElementSibling.classList.toggle('text-stone-700', this.checked)" class="ing-select-checkbox rounded border-stone-300 text-brand-600 focus:ring-0">
-        <span class="text-stone-700 transition-colors">${text}</span>
-      </label>
-    `;
-    ul.appendChild(li);
-  });
-}
-
-    function addSelectedIngredientsToGrocery() {
-  if (!currentDetailRecipe || !currentDetailRecipe.ingredients) return;
-
-  const rows = document.querySelectorAll('#detail-ingredients .recipe-ing-item');
-  let addedCount = 0;
-
-  rows.forEach(row => {
-    const cb = row.querySelector('.ing-select-checkbox');
-    if (cb && cb.checked) {
-      const idx = parseInt(row.dataset.index);
-      const ing = currentDetailRecipe.ingredients[idx];
-
-      if (typeof ing === 'string') {
-        addIngredientToGroceryList(null, "", ing);
-      } else {
-        const amt = ing.amount ? (Math.round((ing.amount * currentServingsFactor) * 10) / 10) : null;
-        addIngredientToGroceryList(amt, ing.unit || "", ing.name);
-      }
-      addedCount++;
-    }
-  });
-
-  if (addedCount === 0) {
-    showToast("Keine Zutaten ausgewählt.");
-    return;
-  }
-
-  pushToCloud();
-  renderGroceries();
-  showToast(`${addedCount} Zutat(en) zur Einkaufsliste hinzugefügt!`);
-}
 
     // --- REZEPT FORMULAR & BILD-LOGIK ---
     function handleImageUpload(e) {
@@ -882,13 +874,6 @@ stepsContainer.innerHTML = stepsData.map((step, idx) => `
           document.getElementById('form-emoji').value = r.emoji;
           document.getElementById('form-time').value = r.time;
           document.getElementById('form-servings').value = r.servings;
-// Bestehende Schritte einladen (egal ob Array oder alter Fließtext)
-const stepsList = Array.isArray(r.steps) ? r.steps : (r.steps || "").split('\n').filter(s => s.trim());
-if (stepsList.length > 0) {
-  stepsList.forEach(s => addStepRow(s.replace(/^\d+[\.\)]\s*/, '')));
-} else {
-  addStepRow();
-}
           document.getElementById('btn-delete-recipe').classList.remove('hidden');
           document.getElementById('form-heading').innerText = "Rezept bearbeiten";
           renderCategoryCheckboxes(r.tags || []);
@@ -900,14 +885,18 @@ if (stepsList.length > 0) {
 
           if (r.ingredients && r.ingredients.length > 0) {
             r.ingredients.forEach(i => {
-              if (typeof i === 'string') {
-                addIngredientRow("", "", i);
-              } else {
-                addIngredientRow(i.amount, i.unit, i.name);
-              }
+              if (typeof i === 'string') addIngredientRow("", "", i);
+              else addIngredientRow(i.amount, i.unit, i.name);
             });
           } else {
             addIngredientRow();
+          }
+
+          const stepsList = Array.isArray(r.steps) ? r.steps : (r.steps || "").split('\n').filter(s => s.trim());
+          if (stepsList.length > 0) {
+            stepsList.forEach(s => addStepRow(s.replace(/^\d+[\.\)]\s*/, '')));
+          } else {
+            addStepRow();
           }
         }
       } else {
@@ -915,7 +904,7 @@ if (stepsList.length > 0) {
         document.getElementById('form-heading').innerText = "Neues Rezept";
         renderCategoryCheckboxes([]);
         addIngredientRow();
-        addStepRow(); // 1 Schritt als Standardvorgabe
+        addStepRow();
       }
       openModal('form-modal');
     }
@@ -944,6 +933,10 @@ if (stepsList.length > 0) {
         }
       });
 
+      const steps = Array.from(document.querySelectorAll('#form-steps-rows .step-text'))
+        .map(t => t.value.trim())
+        .filter(t => t.length > 0);
+
       const newRecipe = {
         id: id,
         title: document.getElementById('form-title').value.trim(),
@@ -953,9 +946,7 @@ if (stepsList.length > 0) {
         servings: parseInt(document.getElementById('form-servings').value) || 4,
         tags: checkedTags,
         ingredients: ingredients,
-        steps: Array.from(document.querySelectorAll('#form-steps-rows .step-text'))
-            .map(t => t.value.trim())
-            .filter(t => t.length > 0)
+        steps: steps
       };
 
       const existingIndex = state.recipes.findIndex(r => r.id === id);
@@ -967,6 +958,7 @@ if (stepsList.length > 0) {
 
       pushToCloud();
       renderRecipes();
+      updateIngredientsDatalist();
       closeModal('form-modal');
       showToast("Rezept gespeichert!");
     }
@@ -977,6 +969,7 @@ if (stepsList.length > 0) {
       state.recipes = state.recipes.filter(r => r.id !== id);
       pushToCloud();
       renderRecipes();
+      updateIngredientsDatalist();
       closeModal('form-modal');
       showToast("Rezept gelöscht");
     }
@@ -1081,60 +1074,148 @@ if (stepsList.length > 0) {
       showToast("Aktive Tage geplant!");
     }
 
-   // --- ÄHNLICHKEITSPRÜFUNG FÜR TIPPFEHLER ---
-function areSimilarWords(a, b) {
-  a = a.trim().toLowerCase();
-  b = b.trim().toLowerCase();
-  if (a === b) return true;
-  
-  // Bei sehr kurzen Wörtern (<= 3 Buchstaben) keine Tippfehler erlauben
-  if (a.length <= 3 || b.length <= 3) return false;
+    // --- ÄHNLICHKEITSPRÜFUNG FÜR TIPPFEHLER (FUZZY MATCHING) ---
+    function areSimilarWords(a, b) {
+      a = a.trim().toLowerCase();
+      b = b.trim().toLowerCase();
+      if (a === b) return true;
+      if (a.length <= 3 || b.length <= 3) return false;
 
-  // Levenshtein-Distanz berechnen (Buchstaben-Unterschiede zählen)
-  const matrix = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
-  for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
-  for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
+      const matrix = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+      for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
+      for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
 
-  for (let i = 1; i <= a.length; i++) {
-    for (let j = 1; j <= b.length; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      matrix[i][j] = Math.min(
-        matrix[i - 1][j] + 1,      // Löschen
-        matrix[i][j - 1] + 1,      // Einfügen
-        matrix[i - 1][j - 1] + cost // Ersetzen
-      );
+      for (let i = 1; i <= a.length; i++) {
+        for (let j = 1; j <= b.length; j++) {
+          const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j] + 1,
+            matrix[i][j - 1] + 1,
+            matrix[i - 1][j - 1] + cost
+          );
+        }
+      }
+
+      const distance = matrix[a.length][b.length];
+      const maxDistance = a.length > 5 ? 2 : 1;
+      return distance <= maxDistance;
     }
-  }
 
-  const distance = matrix[a.length][b.length];
-  // Bis zu 2 Tippfehler bei Wörtern ab 5 Buchstaben, sonst maximal 1 Tippfehler
-  const maxDistance = a.length > 5 ? 2 : 1;
-  return distance <= maxDistance;
-}
+    // --- ZUTATEN-EMOJI EINTEILUNG ---
+    function getIngredientEmoji(name) {
+      if (!name) return "🛒";
+      const str = name.toLowerCase();
 
-function addIngredientToGroceryList(amount, unit, name) {
-  const cleanName = name.trim().toLowerCase();
-  const cleanUnit = (unit || "").trim().toLowerCase();
+      const EMOJI_MAP = [
+        { emoji: "🧄", keywords: ["knoblauch", "garlic"] },
+        { emoji: "🧅", keywords: ["zwiebel", "schalotte", "lauch", "porree"] },
+        { emoji: "🍅", keywords: ["tomate", "passata"] },
+        { emoji: "🥔", keywords: ["kartoffel", "erdapfel", "süßkartoffel"] },
+        { emoji: "🥕", keywords: ["karotte", "möhre", "rübe"] },
+        { emoji: "🥒", keywords: ["gurke", "zucchini"] },
+        { emoji: "🌶️", keywords: ["chili", "peperoni", "jalapeno"] },
+        { emoji: "🫑", keywords: ["paprika"] },
+        { emoji: "🍄", keywords: ["pilz", "champignon", "steinpilz"] },
+        { emoji: "🥦", keywords: ["brokkoli", "blumenkohl"] },
+        { emoji: "🥬", keywords: ["salat", "spinat", "rucola", "kohl"] },
+        { emoji: "🥑", keywords: ["avocado"] },
+        { emoji: "🌿", keywords: ["basilikum", "petersilie", "rosmarin", "thymian", "oregano", "minze", "dill", "koriander", "kräuter"] },
+        { emoji: "🌽", keywords: ["mais"] },
+        { emoji: "🫛", keywords: ["erbse", "kichererbse", "bohne", "linse"] },
+        { emoji: "🍋", keywords: ["zitrone", "limette"] },
+        { emoji: "🍎", keywords: ["apfel", "äpfel"] },
+        { emoji: "🍌", keywords: ["banane"] },
+        { emoji: "🍓", keywords: ["beere", "erdbeere", "himbeere", "blaubeere"] },
+        { emoji: "🍊", keywords: ["orange", "clementine", "mandarine"] },
+        { emoji: "🍝", keywords: ["nudel", "spaghetti", "penne", "pasta", "tagliatelle", "fusilli"] },
+        { emoji: "🍚", keywords: ["reis", "risotto"] },
+        { emoji: "🍞", keywords: ["brot", "toast", "baguette", "brötchen"] },
+        { emoji: "🌾", keywords: ["mehl", "haferflocken", "couscous", "bulgur", "quinoa"] },
+        { emoji: "🥛", keywords: ["milch", "sahne", "creme fraiche", "kokosmilch", "schmand"] },
+        { emoji: "🧀", keywords: ["käse", "parmesan", "mozzarella", "feta", "gouda", "cheddar", "quark"] },
+        { emoji: "🧈", keywords: ["butter", "margarine"] },
+        { emoji: "🥚", keywords: ["ei", "eier"] },
+        { emoji: "🥩", keywords: ["fleisch", "hackfleisch", "rind", "schwein", "steak", "speck", "bacon"] },
+        { emoji: "🍗", keywords: ["hähnchen", "huhn", "geflügel", "pute"] },
+        { emoji: "🐟", keywords: ["fisch", "lachs", "thunfisch", "garnele", "garnelen"] },
+        { emoji: "🧊", keywords: ["tofu"] },
+        { emoji: "🫒", keywords: ["olive", "olivenöl"] },
+        { emoji: "🧴", keywords: ["öl", "essig", "senf", "mayo", "sauce", "ketchup", "sojasauce"] },
+        { emoji: "🧂", keywords: ["salz", "pfeffer", "gewürz", "curry", "paprikapulver", "brühe"] },
+        { emoji: "🍯", keywords: ["zucker", "honig", "sirup", "agavendicksaft"] },
+        { emoji: "🍫", keywords: ["schokolade", "kakao"] },
+        { emoji: "🥜", keywords: ["nuss", "nüsse", "mandel", "erdnuss", "cashew", "walnuss", "pinienkerne"] }
+      ];
 
-  // Findet exakte Treffer ODER Wörter mit 1-2 Tippfehlern bei gleicher Einheit
-  const existing = state.groceries.find(g => 
-    !g.checked && 
-    (g.unit || "").trim().toLowerCase() === cleanUnit &&
-    areSimilarWords(g.name, cleanName)
-  );
+      for (const item of EMOJI_MAP) {
+        if (item.keywords.some(kw => str.includes(kw))) return item.emoji;
+      }
+      return "🛒";
+    }
 
-  if (existing && existing.amount !== null && amount !== null) {
-    existing.amount = Math.round((existing.amount + amount) * 10) / 10;
-  } else {
-    state.groceries.push({
-      id: Date.now() + Math.random().toString(),
-      amount: amount,
-      unit: unit,
-      name: name,
-      checked: false
-    });
-  }
-}
+    // --- EINKAUFSLISTE LOGIK (2-STUFIG) ---
+    function addIngredientToGroceryList(amount, unit, name) {
+      const cleanName = name.trim().toLowerCase();
+      const cleanUnit = (unit || "").trim().toLowerCase();
+
+      const existing = state.groceries.find(g => 
+        !g.checked && 
+        (g.unit || "").trim().toLowerCase() === cleanUnit &&
+        areSimilarWords(g.name, cleanName)
+      );
+
+      if (existing && existing.amount !== null && amount !== null) {
+        existing.amount = Math.round((existing.amount + amount) * 10) / 10;
+      } else {
+        state.groceries.push({
+          id: Date.now() + Math.random().toString(),
+          amount: amount,
+          unit: unit,
+          name: name,
+          checked: false
+        });
+      }
+    }
+
+    function addSelectedIngredientsToGrocery() {
+      if (!currentDetailRecipe || !currentDetailRecipe.ingredients) return;
+
+      const rows = document.querySelectorAll('#detail-ingredients .recipe-ing-item');
+      const selectedItems = [];
+
+      rows.forEach(row => {
+        const cb = row.querySelector('.ing-select-checkbox');
+        if (cb && cb.checked) {
+          const idx = parseInt(row.dataset.index);
+          const ing = currentDetailRecipe.ingredients[idx];
+          if (typeof ing === 'string') {
+            selectedItems.push({ amount: null, unit: "", name: ing });
+          } else {
+            const amt = ing.amount ? (Math.round((ing.amount * currentServingsFactor) * 10) / 10) : null;
+            selectedItems.push({ amount: amt, unit: ing.unit || "", name: ing.name });
+          }
+        }
+      });
+
+      if (selectedItems.length === 0) {
+        showToast("Keine Zutaten ausgewählt.");
+        return;
+      }
+
+      state.stagingRecipes.push({
+        id: Date.now().toString(),
+        recipeId: currentDetailRecipe.id,
+        title: currentDetailRecipe.title,
+        emoji: currentDetailRecipe.emoji || '🍲',
+        servings: Math.round((currentDetailRecipe.servings || 4) * currentServingsFactor),
+        items: selectedItems
+      });
+
+      state.isShoppingMode = false;
+      pushToCloud();
+      renderGroceries();
+      showToast(`„${currentDetailRecipe.title}“ zur Vorbereitung hinzugefügt!`);
+    }
 
     function generateShoppingListFromPlan() {
       let count = 0;
@@ -1144,128 +1225,179 @@ function addIngredientToGroceryList(amount, unit, name) {
           if (id) {
             const r = state.recipes.find(x => x.id === id);
             if (r && r.ingredients) {
-              r.ingredients.forEach(ing => {
-                if (typeof ing === 'string') {
-                  addIngredientToGroceryList(null, "", ing);
-                } else {
-                  addIngredientToGroceryList(ing.amount, ing.unit, ing.name);
-                }
-                count++;
+              const items = r.ingredients.map(ing => {
+                if (typeof ing === 'string') return { amount: null, unit: "", name: ing };
+                return { amount: ing.amount || null, unit: ing.unit || "", name: ing.name };
               });
+
+              state.stagingRecipes.push({
+                id: Date.now() + Math.random().toString(),
+                recipeId: r.id,
+                title: `${r.title} (${day})`,
+                emoji: r.emoji || '🍲',
+                servings: r.servings || 4,
+                items: items
+              });
+              count++;
             }
           }
         }
       });
 
       if (count === 0) {
-        showToast("Keine Gerichte im aktiven Wochenplan.");
+        showToast("Keine aktiven Gerichte im Wochenplan.");
         return;
       }
 
+      state.isShoppingMode = false;
       pushToCloud();
       renderGroceries();
       switchTab('groceries');
-      showToast("Zutaten kombiniert und addiert!");
+      showToast(`${count} Gericht(e) zur Vorbereitung übertragen!`);
     }
 
-    function renderGroceries() {
-      const list = document.getElementById('grocery-list');
-      list.innerHTML = "";
+    function removeStagingRecipe(id) {
+      state.stagingRecipes = state.stagingRecipes.filter(sr => sr.id !== id);
+      pushToCloud();
+      renderGroceries();
+      showToast("Rezept entfernt.");
+    }
 
-      if (state.groceries.length === 0) {
-        list.innerHTML = `<div class="text-center py-8 text-stone-400 text-xs">Einkaufsliste ist leer.</div>`;
+    function removeStagingItem(recipeStagingId, itemIdx) {
+      const group = state.stagingRecipes.find(sr => sr.id === recipeStagingId);
+      if (group) {
+        group.items.splice(itemIdx, 1);
+        if (group.items.length === 0) {
+          state.stagingRecipes = state.stagingRecipes.filter(sr => sr.id !== recipeStagingId);
+        }
+        pushToCloud();
+        renderGroceries();
+      }
+    }
+
+    function consolidateGroceriesForShopping() {
+      if (state.stagingRecipes.length === 0 && state.groceries.length === 0) {
+        showToast("Keine Zutaten vorhanden.");
         return;
       }
 
-      state.groceries.forEach(item => {
-        const div = document.createElement('div');
-        div.className = "bg-white p-3 rounded-xl border border-stone-200 flex items-center justify-between";
-        
-        let labelText = item.name;
-        if (item.amount || item.unit) {
-          labelText = `${item.amount || ''} ${item.unit || ''} ${item.name}`.trim();
+      state.stagingRecipes.forEach(group => {
+        group.items.forEach(item => {
+          addIngredientToGroceryList(item.amount, item.unit, item.name);
+        });
+      });
+
+      state.stagingRecipes = [];
+      state.isShoppingMode = true;
+      pushToCloud();
+      renderGroceries();
+      showToast("Alles zusammengefasst! Viel Erfolg beim Einkauf.");
+    }
+
+    function backToStaging() {
+      state.isShoppingMode = false;
+      pushToCloud();
+      renderGroceries();
+    }
+
+    function renderGroceries() {
+      const stagingView = document.getElementById('staging-view');
+      const shoppingView = document.getElementById('shopping-view');
+      const btnBack = document.getElementById('btn-back-to-staging');
+      const btnClear = document.getElementById('btn-clear-groceries');
+
+      if (!state.stagingRecipes) state.stagingRecipes = [];
+      if (!state.groceries) state.groceries = [];
+
+      const inShopping = state.isShoppingMode || (state.stagingRecipes.length === 0 && state.groceries.length > 0);
+
+      if (!inShopping) {
+        stagingView.classList.remove('hidden');
+        shoppingView.classList.add('hidden');
+        btnBack.classList.add('hidden');
+        btnClear.classList.add('hidden');
+
+        const container = document.getElementById('staging-recipes-container');
+        container.innerHTML = "";
+
+        if (state.stagingRecipes.length === 0) {
+          container.innerHTML = `<div class="text-center py-8 text-stone-400 text-xs bg-white rounded-2xl border border-stone-200">Noch keine Rezepte für den Einkauf vorgemerkt.</div>`;
+          document.getElementById('btn-go-shopping').classList.add('hidden');
+          return;
         }
 
-       const icon = getIngredientEmoji(item.name);
+        document.getElementById('btn-go-shopping').classList.remove('hidden');
 
-        div.innerHTML = `
-          <label class="flex items-center gap-3 flex-1 cursor-pointer">
-            <input type="checkbox" ${item.checked ? 'checked':''} onchange="toggleGrocery('${item.id}')" 
-                   class="rounded border-stone-300 text-brand-600 focus:ring-0 w-4 h-4">
-            <span class="text-base leading-none select-none">${icon}</span>
-            <span class="text-sm ${item.checked ? 'line-through text-stone-400':'text-stone-800'}">${labelText}</span>
-          </label>
-          <button onclick="removeGrocery('${item.id}')" class="text-stone-300 hover:text-red-500 text-lg leading-none px-2">&times;</button>
-        `;
-        list.appendChild(div);
-      });
+        state.stagingRecipes.forEach(group => {
+          const card = document.createElement('div');
+          card.className = "bg-white rounded-2xl border border-stone-200 p-4 shadow-sm space-y-3";
+          
+          const itemsHtml = group.items.map((item, idx) => {
+            const amtStr = item.amount ? `${item.amount} ` : "";
+            const unitStr = item.unit ? `${item.unit} ` : "";
+            return `
+              <li class="flex items-center justify-between text-xs text-stone-700 bg-stone-50 px-2.5 py-1.5 rounded-lg">
+                <span>${amtStr}${unitStr}${item.name}</span>
+                <button onclick="removeStagingItem('${group.id}', ${idx})" class="text-stone-300 hover:text-red-500 font-bold ml-2">&times;</button>
+              </li>
+            `;
+          }).join('');
+
+          card.innerHTML = `
+            <div class="flex items-center justify-between border-b border-stone-100 pb-2">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">${group.emoji}</span>
+                <div>
+                  <h4 class="font-bold text-xs text-stone-900">${group.title}</h4>
+                  <span class="text-[10px] text-stone-400">${group.servings} Portionen</span>
+                </div>
+              </div>
+              <button onclick="removeStagingRecipe('${group.id}')" class="text-xs bg-red-50 text-red-600 font-semibold px-2 py-1 rounded-lg active:scale-95">
+                Rezept entfernen
+              </button>
+            </div>
+            <ul class="space-y-1">${itemsHtml}</ul>
+          `;
+          container.appendChild(card);
+        });
+
+      } else {
+        stagingView.classList.add('hidden');
+        shoppingView.classList.remove('hidden');
+        btnBack.classList.remove('hidden');
+        btnClear.classList.remove('hidden');
+
+        const list = document.getElementById('grocery-list');
+        list.innerHTML = "";
+
+        if (state.groceries.length === 0) {
+          list.innerHTML = `<div class="text-center py-8 text-stone-400 text-xs">Einkaufsliste ist leer.</div>`;
+          return;
+        }
+
+        state.groceries.forEach(item => {
+          const div = document.createElement('div');
+          div.className = "bg-white p-3 rounded-xl border border-stone-200 flex items-center justify-between";
+          
+          let labelText = item.name;
+          if (item.amount || item.unit) {
+            labelText = `${item.amount || ''} ${item.unit || ''} ${item.name}`.trim();
+          }
+          const icon = getIngredientEmoji(item.name);
+
+          div.innerHTML = `
+            <label class="flex items-center gap-3 flex-1 cursor-pointer">
+              <input type="checkbox" ${item.checked ? 'checked':''} onchange="toggleGrocery('${item.id}')" 
+                     class="rounded border-stone-300 text-brand-600 focus:ring-0 w-4 h-4">
+              <span class="text-base leading-none select-none">${icon}</span>
+              <span class="text-sm ${item.checked ? 'line-through text-stone-400':'text-stone-800'}">${labelText}</span>
+            </label>
+            <button onclick="removeGrocery('${item.id}')" class="text-stone-300 hover:text-red-500 text-lg leading-none px-2">&times;</button>
+          `;
+          list.appendChild(div);
+        });
+      }
     }
-
-    // --- ZUTATEN-EMOJI-ERKENNUNG ---
-function getIngredientEmoji(name) {
-  if (!name) return "🛒";
-  const str = name.toLowerCase();
-
-  const EMOJI_MAP = [
-    // Gemüse & Kräuter
-    { emoji: "🧄", keywords: ["knoblauch", "garlic"] },
-    { emoji: "🧅", keywords: ["zwiebel", "schalotte", "lauch", "porree"] },
-    { emoji: "🍅", keywords: ["tomate", "passata"] },
-    { emoji: "🥔", keywords: ["kartoffel", "erdapfel", "süßkartoffel"] },
-    { emoji: "🥕", keywords: ["karotte", "möhre", "rübe"] },
-    { emoji: "🥒", keywords: ["gurke", "zucchini"] },
-    { emoji: "🌶️", keywords: ["chili", "peperoni", "jalapeno"] },
-    { emoji: "🫑", keywords: ["paprika"] },
-    { emoji: "🍄", keywords: ["pilz", "champignon", "steinpilz"] },
-    { emoji: "🥦", keywords: ["brokkoli", "blumenkohl"] },
-    { emoji: "🥬", keywords: ["salat", "spinat", "rucola", "kohl"] },
-    { emoji: "🥑", keywords: ["avocado"] },
-    { emoji: "🌿", keywords: ["basilikum", "petersilie", "rosmarin", "thymian", "oregano", "minze", "dill", "koriander", "kräuter"] },
-    { emoji: "🌽", keywords: ["mais"] },
-    { emoji: "🫛", keywords: ["erbse", "kichererbse", "bohne", "linse"] },
-
-    // Obst & Früchte
-    { emoji: "🍋", keywords: ["zitrone", "limette"] },
-    { emoji: "🍎", keywords: ["apfel", "äpfel"] },
-    { emoji: "🍌", keywords: ["banane"] },
-    { emoji: "🍓", keywords: ["beere", "erdbeere", "himbeere", "blaubeere"] },
-    { emoji: "🍊", keywords: ["orange", "clementine", "mandarine"] },
-
-    // Kohlenhydrate & Getreide
-    { emoji: "🍝", keywords: ["nudel", "spaghetti", "penne", "pasta", "tagliatelle", "fusilli"] },
-    { emoji: "🍚", keywords: ["reis", "risotto"] },
-    { emoji: "🍞", keywords: ["brot", "toast", "baguette", "brötchen"] },
-    { emoji: "🌾", keywords: ["mehl", "haferflocken", "couscous", "bulgur", "quinoa"] },
-
-    // Milchprodukte & Eier
-    { emoji: "🥛", keywords: ["milch", "sahne", "creme fraiche", "kokosmilch", "schmand"] },
-    { emoji: "🧀", keywords: ["käse", "parmesan", "mozzarella", "feta", "gouda", "cheddar", "quark"] },
-    { emoji: "🧈", keywords: ["butter", "margarine"] },
-    { emoji: "🥚", keywords: ["ei", "eier"] },
-
-    // Fleisch, Fisch & Tofu
-    { emoji: "🥩", keywords: ["fleisch", "hackfleisch", "rind", "schwein", "steak", "speck", "bacon"] },
-    { emoji: "🍗", keywords: ["hähnchen", "huhn", "geflügel", "pute"] },
-    { emoji: "🐟", keywords: ["fisch", "lachs", "thunfisch", "garnele", "garnelen"] },
-    { emoji: "🧊", keywords: ["tofu"] },
-
-    // Gewürze, Öle & Vorrat
-    { emoji: "🫒", keywords: ["olive", "olivenöl"] },
-    { emoji: "🧴", keywords: ["öl", "essig", "senf", "mayo", "sauce", "ketchup", "sojasauce"] },
-    { emoji: "🧂", keywords: ["salz", "pfeffer", "gewürz", "curry", "paprikapulver", "brühe"] },
-    { emoji: "🍯", keywords: ["zucker", "honig", "sirup", "agavendicksaft"] },
-    { emoji: "🍫", keywords: ["schokolade", "kakao"] },
-    { emoji: "🥜", keywords: ["nuss", "nüsse", "mandel", "erdnuss", "cashew", "walnuss", "pinienkerne"] }
-  ];
-
-  for (const item of EMOJI_MAP) {
-    if (item.keywords.some(kw => str.includes(kw))) {
-      return item.emoji;
-    }
-  }
-
-  return "🛒"; // Fallback, falls die Zutat nicht zugeordnet werden kann
-}
 
     function addGroceryManual(e) {
       e.preventDefault();
