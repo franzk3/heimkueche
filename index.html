@@ -973,29 +973,60 @@
       showToast("Aktive Tage geplant!");
     }
 
-    // --- EINKAUFSLISTE (AUTOMATISCHE ADDIERUNG) ---
-    function addIngredientToGroceryList(amount, unit, name) {
-      const cleanName = name.trim().toLowerCase();
-      const cleanUnit = (unit || "").trim().toLowerCase();
+   // --- ÄHNLICHKEITSPRÜFUNG FÜR TIPPFEHLER ---
+function areSimilarWords(a, b) {
+  a = a.trim().toLowerCase();
+  b = b.trim().toLowerCase();
+  if (a === b) return true;
+  
+  // Bei sehr kurzen Wörtern (<= 3 Buchstaben) keine Tippfehler erlauben
+  if (a.length <= 3 || b.length <= 3) return false;
 
-      const existing = state.groceries.find(g => 
-        !g.checked && 
-        g.name.trim().toLowerCase() === cleanName && 
-        (g.unit || "").trim().toLowerCase() === cleanUnit
+  // Levenshtein-Distanz berechnen (Buchstaben-Unterschiede zählen)
+  const matrix = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+  for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
+  for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
+
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,      // Löschen
+        matrix[i][j - 1] + 1,      // Einfügen
+        matrix[i - 1][j - 1] + cost // Ersetzen
       );
-
-      if (existing && existing.amount !== null && amount !== null) {
-        existing.amount = Math.round((existing.amount + amount) * 10) / 10;
-      } else {
-        state.groceries.push({
-          id: Date.now() + Math.random().toString(),
-          amount: amount,
-          unit: unit,
-          name: name,
-          checked: false
-        });
-      }
     }
+  }
+
+  const distance = matrix[a.length][b.length];
+  // Bis zu 2 Tippfehler bei Wörtern ab 5 Buchstaben, sonst maximal 1 Tippfehler
+  const maxDistance = a.length > 5 ? 2 : 1;
+  return distance <= maxDistance;
+}
+
+function addIngredientToGroceryList(amount, unit, name) {
+  const cleanName = name.trim().toLowerCase();
+  const cleanUnit = (unit || "").trim().toLowerCase();
+
+  // Findet exakte Treffer ODER Wörter mit 1-2 Tippfehlern bei gleicher Einheit
+  const existing = state.groceries.find(g => 
+    !g.checked && 
+    (g.unit || "").trim().toLowerCase() === cleanUnit &&
+    areSimilarWords(g.name, cleanName)
+  );
+
+  if (existing && existing.amount !== null && amount !== null) {
+    existing.amount = Math.round((existing.amount + amount) * 10) / 10;
+  } else {
+    state.groceries.push({
+      id: Date.now() + Math.random().toString(),
+      amount: amount,
+      unit: unit,
+      name: name,
+      checked: false
+    });
+  }
+}
 
     function generateShoppingListFromPlan() {
       let count = 0;
