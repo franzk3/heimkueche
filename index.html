@@ -343,7 +343,7 @@
     // ⚙️ HIER DEINE JSONBIN-DATEN EINTRAGEN:
     // ==========================================
     const JSONBIN_ID = "6adb8714ffd5d160538623fd";
-    const JSONBIN_KEY = "$2a$10$y6kyGrnoX1xkRVsn1h44puSeCqiClneLZpxA.4P4JsubFVZ3o8q8i"; // Hier deinen X-Access-Key eintragen!
+    const JSONBIN_KEY = "$2a$10$y6kyGrnoX1xkRVsn1h44puSeCqiClneLZpxA.4P4JsubFVZ3o8q8i";
     const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
 
     const DAYS = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
@@ -456,7 +456,7 @@
 
     // --- LOKALE DATEN & DEFAULTS ---
     function loadLocalData() {
-      const stored = localStorage.getItem("heimkueche_data_v9");
+      const stored = localStorage.getItem("heimkueche_data_v10");
       if (stored) {
         try { 
           state = Object.assign(state, JSON.parse(stored)); 
@@ -516,7 +516,7 @@
     }
 
     function saveLocalData() {
-      localStorage.setItem("heimkueche_data_v9", JSON.stringify(state));
+      localStorage.setItem("heimkueche_data_v10", JSON.stringify(state));
     }
 
     function renderAll() {
@@ -1177,332 +1177,241 @@
       return "🛒";
     }
 
-    // --- EINKAUFSLISTE LOGIK (2-STUFIG & DYNAMISCH) ---
-  // --- EINKAUFSLISTE LOGIK (2-STUFIG & STABIL) ---
-function addIngredientToGroceryList(amount, unit, name) {
-  const cleanName = name.trim().toLowerCase();
-  const cleanUnit = (unit || "").trim().toLowerCase();
+    // --- EINKAUFSLISTE LOGIK (2-STUFIG & STABIL) ---
+    function addIngredientToGroceryList(amount, unit, name) {
+      const cleanName = name.trim().toLowerCase();
+      const cleanUnit = (unit || "").trim().toLowerCase();
 
-  const existing = state.groceries.find(g => 
-    (g.unit || "").trim().toLowerCase() === cleanUnit &&
-    areSimilarWords(g.name, cleanName)
-  );
+      const existing = state.groceries.find(g => 
+        (g.unit || "").trim().toLowerCase() === cleanUnit &&
+        areSimilarWords(g.name, cleanName)
+      );
 
-  if (existing && existing.amount !== null && amount !== null) {
-    existing.amount = Math.round((existing.amount + amount) * 10) / 10;
-  } else {
-    state.groceries.push({
-      id: Date.now() + Math.random().toString(),
-      amount: amount,
-      unit: unit,
-      name: name,
-      checked: false
-    });
-  }
-}
-
-// Baut die summierte Liste stabil neu auf
-function buildShoppingListFromData() {
-  const previousChecked = new Set();
-  (state.groceries || []).forEach(g => {
-    if (g.checked) previousChecked.add(`${(g.unit || "").trim().toLowerCase()}__${g.name.trim().toLowerCase()}`);
-  });
-
-  state.groceries = [];
-
-  // 1. Aus den vorgemerkten Rezepten
-  (state.stagingRecipes || []).forEach(group => {
-    (group.items || []).forEach(item => {
-      addIngredientToGroceryList(item.amount, item.unit, item.name);
-    });
-  });
-
-  // 2. Aus den manuellen Artikeln (Klopapier etc.)
-  (state.manualGroceries || []).forEach(item => {
-    addIngredientToGroceryList(item.amount, item.unit, item.name);
-  });
-
-  // 3. Häkchen beibehalten
-  state.groceries.forEach(g => {
-    const key = `${(g.unit || "").trim().toLowerCase()}__${g.name.trim().toLowerCase()}`;
-    if (previousChecked.has(key)) g.checked = true;
-  });
-}
-
-function addSelectedIngredientsToGrocery() {
-  if (!currentDetailRecipe || !currentDetailRecipe.ingredients) return;
-
-  const rows = document.querySelectorAll('#detail-ingredients .recipe-ing-item');
-  const selectedItems = [];
-
-  rows.forEach(row => {
-    const cb = row.querySelector('.ing-select-checkbox');
-    if (cb && cb.checked) {
-      const idx = parseInt(row.dataset.index);
-      const ing = currentDetailRecipe.ingredients[idx];
-      if (typeof ing === 'string') {
-        selectedItems.push({ amount: null, unit: "", name: ing });
+      if (existing && existing.amount !== null && amount !== null) {
+        existing.amount = Math.round((existing.amount + amount) * 10) / 10;
       } else {
-        const amt = ing.amount ? (Math.round((ing.amount * currentServingsFactor) * 10) / 10) : null;
-        selectedItems.push({ amount: amt, unit: ing.unit || "", name: ing.name });
+        state.groceries.push({
+          id: Date.now() + Math.random().toString(),
+          amount: amount,
+          unit: unit,
+          name: name,
+          checked: false
+        });
       }
     }
-  });
 
-  if (selectedItems.length === 0) {
-    showToast("Keine Zutaten ausgewählt.");
-    return;
-  }
+    function buildShoppingListFromData() {
+      const previousChecked = new Set();
+      (state.groceries || []).forEach(g => {
+        if (g.checked) previousChecked.add(`${(g.unit || "").trim().toLowerCase()}__${g.name.trim().toLowerCase()}`);
+      });
 
-  if (!state.stagingRecipes) state.stagingRecipes = [];
-  state.stagingRecipes.push({
-    id: Date.now().toString(),
-    recipeId: currentDetailRecipe.id,
-    title: currentDetailRecipe.title,
-    emoji: currentDetailRecipe.emoji || '🍲',
-    servings: Math.round((currentDetailRecipe.servings || 4) * currentServingsFactor),
-    items: selectedItems
-  });
+      state.groceries = [];
 
-  buildShoppingListFromData();
-  pushToCloud();
-  renderGroceries();
-  showToast(`„${currentDetailRecipe.title}“ vorgemerkt!`);
-}
+      (state.stagingRecipes || []).forEach(group => {
+        (group.items || []).forEach(item => {
+          addIngredientToGroceryList(item.amount, item.unit, item.name);
+        });
+      });
 
-function generateShoppingListFromPlan() {
-  let count = 0;
-  if (!state.stagingRecipes) state.stagingRecipes = [];
+      (state.manualGroceries || []).forEach(item => {
+        addIngredientToGroceryList(item.amount, item.unit, item.name);
+      });
 
-  DAYS.forEach(day => {
-    if (!state.excludedDays.includes(day)) {
-      const id = state.plan[day];
-      if (id) {
-        const r = state.recipes.find(x => x.id === id);
-        if (r && r.ingredients) {
-          const items = r.ingredients.map(ing => {
-            if (typeof ing === 'string') return { amount: null, unit: "", name: ing };
-            return { amount: ing.amount || null, unit: ing.unit || "", name: ing.name };
-          });
-
-          state.stagingRecipes.push({
-            id: Date.now() + Math.random().toString(),
-            recipeId: r.id,
-            title: `${r.title} (${day})`,
-            emoji: r.emoji || '🍲',
-            servings: r.servings || 4,
-            items: items
-          });
-          count++;
-        }
-      }
-    }
-  });
-
-  if (count === 0) {
-    showToast("Keine aktiven Gerichte im Wochenplan.");
-    return;
-  }
-
-  buildShoppingListFromData();
-  pushToCloud();
-  renderGroceries();
-  switchTab('groceries');
-  showToast(`${count} Gericht(e) zur Vorbereitung übertragen!`);
-}
-
-function removeStagingRecipe(id) {
-  state.stagingRecipes = (state.stagingRecipes || []).filter(sr => sr.id !== id);
-  buildShoppingListFromData();
-  pushToCloud();
-  renderGroceries();
-  showToast("Rezept entfernt.");
-}
-
-function removeStagingItem(recipeStagingId, itemIdx) {
-  const group = (state.stagingRecipes || []).find(sr => sr.id === recipeStagingId);
-  if (group && group.items) {
-    group.items.splice(itemIdx, 1);
-    if (group.items.length === 0) {
-      state.stagingRecipes = state.stagingRecipes.filter(sr => sr.id !== recipeStagingId);
-    }
-    buildShoppingListFromData();
-    pushToCloud();
-    renderGroceries();
-  }
-}
-
-function consolidateGroceriesForShopping() {
-  buildShoppingListFromData();
-  state.isShoppingMode = true;
-  pushToCloud();
-  renderGroceries();
-  showToast("Einkaufsliste geöffnet!");
-}
-
-function backToStaging() {
-  state.isShoppingMode = false;
-  pushToCloud();
-  renderGroceries();
-}
-
-function renderGroceries() {
-  const stagingView = document.getElementById('staging-view');
-  const shoppingView = document.getElementById('shopping-view');
-  const btnBack = document.getElementById('btn-back-to-staging');
-  const btnClear = document.getElementById('btn-clear-groceries');
-
-  if (!state.stagingRecipes) state.stagingRecipes = [];
-  if (!state.manualGroceries) state.manualGroceries = [];
-  if (!state.groceries) state.groceries = [];
-
-  const inShopping = state.isShoppingMode === true;
-
-  if (!inShopping) {
-    // ANSICHT 1: STAGING (Vorgemerkte Rezepte)
-    stagingView.classList.remove('hidden');
-    shoppingView.classList.add('hidden');
-    btnClear.classList.add('hidden');
-
-    if (state.groceries.length > 0 || state.manualGroceries.length > 0) {
-      btnBack.innerText = "Zur Einkaufsliste →";
-      btnBack.onclick = consolidateGroceriesForShopping;
-      btnBack.classList.remove('hidden');
-    } else {
-      btnBack.classList.add('hidden');
-    }
-
-    const container = document.getElementById('staging-recipes-container');
-    container.innerHTML = "";
-
-    if (state.stagingRecipes.length === 0) {
-      container.innerHTML = `<div class="text-center py-8 text-stone-400 text-xs bg-white rounded-2xl border border-stone-200">Noch keine Rezepte für den Einkauf vorgemerkt.</div>`;
-      document.getElementById('btn-go-shopping').classList.add('hidden');
-    } else {
-      document.getElementById('btn-go-shopping').classList.remove('hidden');
-
-      state.stagingRecipes.forEach(group => {
-        const card = document.createElement('div');
-        card.className = "bg-white rounded-2xl border border-stone-200 p-4 shadow-sm space-y-3";
-        
-        const itemsHtml = (group.items || []).map((item, idx) => {
-          const amtStr = item.amount ? `${item.amount} ` : "";
-          const unitStr = item.unit ? `${item.unit} ` : "";
-          return `
-            <li class="flex items-center justify-between text-xs text-stone-700 bg-stone-50 px-2.5 py-1.5 rounded-lg">
-              <span>${amtStr}${unitStr}${item.name}</span>
-              <button type="button" onclick="removeStagingItem('${group.id}', ${idx})" class="text-stone-300 hover:text-red-500 font-bold ml-2 text-base leading-none">&times;</button>
-            </li>
-          `;
-        }).join('');
-
-        card.innerHTML = `
-          <div class="flex items-center justify-between border-b border-stone-100 pb-2">
-            <div class="flex items-center gap-2">
-              <span class="text-xl">${group.emoji || '🍲'}</span>
-              <div>
-                <h4 class="font-bold text-xs text-stone-900">${group.title}</h4>
-                <span class="text-[10px] text-stone-400">${group.servings} Portionen</span>
-              </div>
-            </div>
-            <button type="button" onclick="removeStagingRecipe('${group.id}')" class="text-xs bg-red-50 text-red-600 font-semibold px-2 py-1 rounded-lg active:scale-95">
-              Rezept entfernen
-            </button>
-          </div>
-          <ul class="space-y-1">${itemsHtml}</ul>
-        `;
-        container.appendChild(card);
+      state.groceries.forEach(g => {
+        const key = `${(g.unit || "").trim().toLowerCase()}__${g.name.trim().toLowerCase()}`;
+        if (previousChecked.has(key)) g.checked = true;
       });
     }
 
-  } else {
-    // ANSICHT 2: SUMMIERTE LISTE (Einkaufsmodus)
-    stagingView.classList.add('hidden');
-    shoppingView.classList.remove('hidden');
-    btnClear.classList.remove('hidden');
+    function addSelectedIngredientsToGrocery() {
+      if (!currentDetailRecipe || !currentDetailRecipe.ingredients) return;
 
-    btnBack.innerText = "← Zurück zur Übersicht";
-    btnBack.onclick = backToStaging;
-    btnBack.classList.remove('hidden');
+      const rows = document.querySelectorAll('#detail-ingredients .recipe-ing-item');
+      const selectedItems = [];
 
-    const list = document.getElementById('grocery-list');
-    list.innerHTML = "";
+      rows.forEach(row => {
+        const cb = row.querySelector('.ing-select-checkbox');
+        if (cb && cb.checked) {
+          const idx = parseInt(row.dataset.index);
+          const ing = currentDetailRecipe.ingredients[idx];
+          if (typeof ing === 'string') {
+            selectedItems.push({ amount: null, unit: "", name: ing });
+          } else {
+            const amt = ing.amount ? (Math.round((ing.amount * currentServingsFactor) * 10) / 10) : null;
+            selectedItems.push({ amount: amt, unit: ing.unit || "", name: ing.name });
+          }
+        }
+      });
 
-    if (state.groceries.length === 0) {
-      list.innerHTML = `<div class="text-center py-8 text-stone-400 text-xs">Einkaufsliste ist leer.</div>`;
-      return;
+      if (selectedItems.length === 0) {
+        showToast("Keine Zutaten ausgewählt.");
+        return;
+      }
+
+      if (!state.stagingRecipes) state.stagingRecipes = [];
+      state.stagingRecipes.push({
+        id: Date.now().toString(),
+        recipeId: currentDetailRecipe.id,
+        title: currentDetailRecipe.title,
+        emoji: currentDetailRecipe.emoji || '🍲',
+        servings: Math.round((currentDetailRecipe.servings || 4) * currentServingsFactor),
+        items: selectedItems
+      });
+
+      buildShoppingListFromData();
+      pushToCloud();
+      renderGroceries();
+      showToast(`„${currentDetailRecipe.title}“ vorgemerkt!`);
     }
 
-    state.groceries.forEach(item => {
-      const div = document.createElement('div');
-      div.className = "bg-white p-3 rounded-xl border border-stone-200 flex items-center justify-between";
-      
-      let labelText = item.name;
-      if (item.amount || item.unit) {
-        labelText = `${item.amount || ''} ${item.unit || ''} ${item.name}`.trim();
-      }
-      const icon = getIngredientEmoji(item.name);
+    function generateShoppingListFromPlan() {
+      let count = 0;
+      if (!state.stagingRecipes) state.stagingRecipes = [];
 
-      div.innerHTML = `
-        <label class="flex items-center gap-3 flex-1 cursor-pointer">
-          <input type="checkbox" ${item.checked ? 'checked':''} onchange="toggleGrocery('${item.id}')" 
-                 class="rounded border-stone-300 text-brand-600 focus:ring-0 w-4 h-4">
-          <span class="text-base leading-none select-none">${icon}</span>
-          <span class="text-sm ${item.checked ? 'line-through text-stone-400':'text-stone-800'}">${labelText}</span>
-        </label>
-        <button type="button" onclick="removeGrocery('${item.id}')" class="text-stone-300 hover:text-red-500 text-lg leading-none px-2">&times;</button>
-      `;
-      list.appendChild(div);
-    });
-  }
-}
-    
+      DAYS.forEach(day => {
+        if (!state.excludedDays.includes(day)) {
+          const id = state.plan[day];
+          if (id) {
+            const r = state.recipes.find(x => x.id === id);
+            if (r && r.ingredients) {
+              const items = r.ingredients.map(ing => {
+                if (typeof ing === 'string') return { amount: null, unit: "", name: ing };
+                return { amount: ing.amount || null, unit: ing.unit || "", name: ing.name };
+              });
+
+              state.stagingRecipes.push({
+                id: Date.now() + Math.random().toString(),
+                recipeId: r.id,
+                title: `${r.title} (${day})`,
+                emoji: r.emoji || '🍲',
+                servings: r.servings || 4,
+                items: items
+              });
+              count++;
+            }
+          }
+        }
+      });
+
+      if (count === 0) {
+        showToast("Keine aktiven Gerichte im Wochenplan.");
+        return;
+      }
+
+      buildShoppingListFromData();
+      pushToCloud();
+      renderGroceries();
+      switchTab('groceries');
+      showToast(`${count} Gericht(e) zur Vorbereitung übertragen!`);
+    }
+
+    function removeStagingRecipe(id) {
+      state.stagingRecipes = (state.stagingRecipes || []).filter(sr => sr.id !== id);
+      buildShoppingListFromData();
+      pushToCloud();
+      renderGroceries();
+      showToast("Rezept entfernt.");
+    }
+
+    function removeStagingItem(recipeStagingId, itemIdx) {
+      const group = (state.stagingRecipes || []).find(sr => sr.id === recipeStagingId);
+      if (group && group.items) {
+        group.items.splice(itemIdx, 1);
+        if (group.items.length === 0) {
+          state.stagingRecipes = state.stagingRecipes.filter(sr => sr.id !== recipeStagingId);
+        }
+        buildShoppingListFromData();
+        pushToCloud();
+        renderGroceries();
+      }
+    }
+
+    function consolidateGroceriesForShopping() {
+      buildShoppingListFromData();
+      state.isShoppingMode = true;
+      pushToCloud();
+      renderGroceries();
+      showToast("Einkaufsliste geöffnet!");
+    }
+
+    function backToStaging() {
+      state.isShoppingMode = false;
+      pushToCloud();
+      renderGroceries();
+    }
+
+    function renderGroceries() {
+      const stagingView = document.getElementById('staging-view');
+      const shoppingView = document.getElementById('shopping-view');
+      const btnBack = document.getElementById('btn-back-to-staging');
+      const btnClear = document.getElementById('btn-clear-groceries');
+
+      if (!state.stagingRecipes) state.stagingRecipes = [];
+      if (!state.manualGroceries) state.manualGroceries = [];
+      if (!state.groceries) state.groceries = [];
+
+      const inShopping = state.isShoppingMode === true;
+
+      if (!inShopping) {
+        // ANSICHT 1: STAGING (Vorgemerkte Rezepte)
+        stagingView.classList.remove('hidden');
+        shoppingView.classList.add('hidden');
+        btnClear.classList.add('hidden');
+
+        if (state.groceries.length > 0 || state.manualGroceries.length > 0) {
+          btnBack.innerText = "Zur Einkaufsliste →";
+          btnBack.onclick = consolidateGroceriesForShopping;
+          btnBack.classList.remove('hidden');
+        } else {
+          btnBack.classList.add('hidden');
+        }
+
         const container = document.getElementById('staging-recipes-container');
         container.innerHTML = "";
 
         if (state.stagingRecipes.length === 0) {
           container.innerHTML = `<div class="text-center py-8 text-stone-400 text-xs bg-white rounded-2xl border border-stone-200">Noch keine Rezepte für den Einkauf vorgemerkt.</div>`;
           document.getElementById('btn-go-shopping').classList.add('hidden');
-          return;
+        } else {
+          document.getElementById('btn-go-shopping').classList.remove('hidden');
+
+          state.stagingRecipes.forEach(group => {
+            const card = document.createElement('div');
+            card.className = "bg-white rounded-2xl border border-stone-200 p-4 shadow-sm space-y-3";
+            
+            const itemsHtml = (group.items || []).map((item, idx) => {
+              const amtStr = item.amount ? `${item.amount} ` : "";
+              const unitStr = item.unit ? `${item.unit} ` : "";
+              return `
+                <li class="flex items-center justify-between text-xs text-stone-700 bg-stone-50 px-2.5 py-1.5 rounded-lg">
+                  <span>${amtStr}${unitStr}${item.name}</span>
+                  <button type="button" onclick="removeStagingItem('${group.id}', ${idx})" class="text-stone-300 hover:text-red-500 font-bold ml-2 text-base leading-none">&times;</button>
+                </li>
+              `;
+            }).join('');
+
+            card.innerHTML = `
+              <div class="flex items-center justify-between border-b border-stone-100 pb-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-xl">${group.emoji || '🍲'}</span>
+                  <div>
+                    <h4 class="font-bold text-xs text-stone-900">${group.title}</h4>
+                    <span class="text-[10px] text-stone-400">${group.servings} Portionen</span>
+                  </div>
+                </div>
+                <button type="button" onclick="removeStagingRecipe('${group.id}')" class="text-xs bg-red-50 text-red-600 font-semibold px-2 py-1 rounded-lg active:scale-95">
+                  Rezept entfernen
+                </button>
+              </div>
+              <ul class="space-y-1">${itemsHtml}</ul>
+            `;
+            container.appendChild(card);
+          });
         }
 
-        document.getElementById('btn-go-shopping').classList.remove('hidden');
-
-        state.stagingRecipes.forEach(group => {
-          const card = document.createElement('div');
-          card.className = "bg-white rounded-2xl border border-stone-200 p-4 shadow-sm space-y-3";
-          
-          const itemsHtml = group.items.map((item, idx) => {
-            const amtStr = item.amount ? `${item.amount} ` : "";
-            const unitStr = item.unit ? `${item.unit} ` : "";
-            return `
-              <li class="flex items-center justify-between text-xs text-stone-700 bg-stone-50 px-2.5 py-1.5 rounded-lg">
-                <span>${amtStr}${unitStr}${item.name}</span>
-                <button onclick="removeStagingItem('${group.id}', ${idx})" class="text-stone-300 hover:text-red-500 font-bold ml-2">&times;</button>
-              </li>
-            `;
-          }).join('');
-
-          card.innerHTML = `
-            <div class="flex items-center justify-between border-b border-stone-100 pb-2">
-              <div class="flex items-center gap-2">
-                <span class="text-xl">${group.emoji}</span>
-                <div>
-                  <h4 class="font-bold text-xs text-stone-900">${group.title}</h4>
-                  <span class="text-[10px] text-stone-400">${group.servings} Portionen</span>
-                </div>
-              </div>
-              <button onclick="removeStagingRecipe('${group.id}')" class="text-xs bg-red-50 text-red-600 font-semibold px-2 py-1 rounded-lg active:scale-95">
-                Rezept entfernen
-              </button>
-            </div>
-            <ul class="space-y-1">${itemsHtml}</ul>
-          `;
-          container.appendChild(card);
-        });
-
       } else {
-        // ANSICHT 2: ZUSAMMENGEFASSTE EINKAUFSLISTE
+        // ANSICHT 2: SUMMIERTE LISTE (Einkaufsmodus)
         stagingView.classList.add('hidden');
         shoppingView.classList.remove('hidden');
         btnClear.classList.remove('hidden');
@@ -1536,7 +1445,7 @@ function renderGroceries() {
               <span class="text-base leading-none select-none">${icon}</span>
               <span class="text-sm ${item.checked ? 'line-through text-stone-400':'text-stone-800'}">${labelText}</span>
             </label>
-            <button onclick="removeGrocery('${item.id}')" class="text-stone-300 hover:text-red-500 text-lg leading-none px-2">&times;</button>
+            <button type="button" onclick="removeGrocery('${item.id}')" class="text-stone-300 hover:text-red-500 text-lg leading-none px-2">&times;</button>
           `;
           list.appendChild(div);
         });
@@ -1567,7 +1476,7 @@ function renderGroceries() {
       unitInput.value = "";
       nameInput.value = "";
 
-      recalculateConsolidatedGroceries();
+      buildShoppingListFromData();
       pushToCloud();
       renderGroceries();
       showToast(`„${name}“ hinzugefügt`);
