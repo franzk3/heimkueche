@@ -213,10 +213,16 @@
           </div>
         </div>
 
-        <div>
-          <h4 class="text-xs font-bold uppercase tracking-wider text-stone-400 mb-2">Zutaten</h4>
-          <ul id="detail-ingredients" class="space-y-1.5 text-sm"></ul>
-        </div>
+       <div>
+  <div class="flex items-center justify-between mb-2">
+    <h4 class="text-xs font-bold uppercase tracking-wider text-stone-400">Zutaten</h4>
+    <button type="button" onclick="addSelectedIngredientsToGrocery()" class="text-xs font-semibold bg-herb-50 text-herb-600 hover:bg-herb-100 border border-herb-200 px-2.5 py-1 rounded-lg flex items-center gap-1 active:scale-95 transition-all">
+      <span>🛒</span> Ausgewählte zur Liste
+    </button>
+  </div>
+  <p class="text-[11px] text-stone-400 mb-2">Häkchen entfernen bei Zutaten, die du schon zu Hause hast.</p>
+  <ul id="detail-ingredients" class="space-y-1.5 text-sm"></ul>
+</div>
 
         <div>
           <h4 class="text-xs font-bold uppercase tracking-wider text-stone-400 mb-2">Zubereitung</h4>
@@ -744,10 +750,10 @@ stepsContainer.innerHTML = stepsData.map((step, idx) => `
       renderIngredientsList();
     }
 
-   function renderIngredientsList() {
+  function renderIngredientsList() {
   const ul = document.getElementById('detail-ingredients');
   ul.innerHTML = "";
-  currentDetailRecipe.ingredients.forEach(ing => {
+  currentDetailRecipe.ingredients.forEach((ing, idx) => {
     let text = "";
     if (typeof ing === 'string') {
       text = ing;
@@ -757,14 +763,48 @@ stepsContainer.innerHTML = stepsData.map((step, idx) => `
     }
 
     const li = document.createElement('li');
+    li.className = "recipe-ing-item";
+    li.dataset.index = idx;
     li.innerHTML = `
       <label class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-stone-50 cursor-pointer select-none">
-        <input type="checkbox" onchange="this.nextElementSibling.classList.toggle('line-through', this.checked); this.nextElementSibling.classList.toggle('text-stone-400', this.checked)" class="rounded border-stone-300 text-brand-600 focus:ring-0">
+        <input type="checkbox" checked onchange="this.nextElementSibling.classList.toggle('line-through', !this.checked); this.nextElementSibling.classList.toggle('text-stone-300', !this.checked); this.nextElementSibling.classList.toggle('text-stone-700', this.checked)" class="ing-select-checkbox rounded border-stone-300 text-brand-600 focus:ring-0">
         <span class="text-stone-700 transition-colors">${text}</span>
       </label>
     `;
     ul.appendChild(li);
   });
+}
+
+    function addSelectedIngredientsToGrocery() {
+  if (!currentDetailRecipe || !currentDetailRecipe.ingredients) return;
+
+  const rows = document.querySelectorAll('#detail-ingredients .recipe-ing-item');
+  let addedCount = 0;
+
+  rows.forEach(row => {
+    const cb = row.querySelector('.ing-select-checkbox');
+    if (cb && cb.checked) {
+      const idx = parseInt(row.dataset.index);
+      const ing = currentDetailRecipe.ingredients[idx];
+
+      if (typeof ing === 'string') {
+        addIngredientToGroceryList(null, "", ing);
+      } else {
+        const amt = ing.amount ? (Math.round((ing.amount * currentServingsFactor) * 10) / 10) : null;
+        addIngredientToGroceryList(amt, ing.unit || "", ing.name);
+      }
+      addedCount++;
+    }
+  });
+
+  if (addedCount === 0) {
+    showToast("Keine Zutaten ausgewählt.");
+    return;
+  }
+
+  pushToCloud();
+  renderGroceries();
+  showToast(`${addedCount} Zutat(en) zur Einkaufsliste hinzugefügt!`);
 }
 
     // --- REZEPT FORMULAR & BILD-LOGIK ---
