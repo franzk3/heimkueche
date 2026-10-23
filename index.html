@@ -684,28 +684,28 @@
       renderIngredientsList();
     }
 
-    function renderIngredientsList() {
-      const ul = document.getElementById('detail-ingredients');
-      ul.innerHTML = "";
-      currentDetailRecipe.ingredients.forEach(ing => {
-        let text = "";
-        if (typeof ing === 'string') {
-          text = ing;
-        } else {
-          const amt = ing.amount ? (Math.round((ing.amount * currentServingsFactor) * 10) / 10) : "";
-          text = `${amt} ${ing.unit || ''} ${ing.name}`.trim();
-        }
-
-        const li = document.createElement('li');
-        li.className = "flex items-center gap-2.5 p-2 rounded-lg hover:bg-stone-50 cursor-pointer";
-        li.onclick = () => li.classList.toggle('line-through');
-        li.innerHTML = `
-          <input type="checkbox" class="rounded border-stone-300 text-brand-600 focus:ring-0">
-          <span class="text-stone-700">${text}</span>
-        `;
-        ul.appendChild(li);
-      });
+   function renderIngredientsList() {
+  const ul = document.getElementById('detail-ingredients');
+  ul.innerHTML = "";
+  currentDetailRecipe.ingredients.forEach(ing => {
+    let text = "";
+    if (typeof ing === 'string') {
+      text = ing;
+    } else {
+      const amt = ing.amount ? (Math.round((ing.amount * currentServingsFactor) * 10) / 10) : "";
+      text = `${amt} ${ing.unit || ''} ${ing.name}`.trim();
     }
+
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <label class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-stone-50 cursor-pointer select-none">
+        <input type="checkbox" onchange="this.nextElementSibling.classList.toggle('line-through', this.checked); this.nextElementSibling.classList.toggle('text-stone-400', this.checked)" class="rounded border-stone-300 text-brand-600 focus:ring-0">
+        <span class="text-stone-700 transition-colors">${text}</span>
+      </label>
+    `;
+    ul.appendChild(li);
+  });
+}
 
     // --- REZEPT FORMULAR & BILD-LOGIK ---
     function handleImageUpload(e) {
