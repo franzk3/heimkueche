@@ -1296,56 +1296,143 @@
       }
     }
 
-    function consolidateGroceriesForShopping() {
-      if (state.stagingRecipes.length === 0 && state.groceries.length === 0) {
-        showToast("Keine Zutaten vorhanden.");
-        return;
+  function consolidateGroceriesForShopping() {
+  if (state.stagingRecipes.length === 0 && state.groceries.length === 0) {
+    showToast("Keine Zutaten vorhanden.");
+    return;
+  }
+
+  // Überträgt die Zutaten in die Liste, OHNE die Rezeptübersicht zu löschen
+  state.stagingRecipes.forEach(group => {
+    group.items.forEach(item => {
+      addIngredientToGroceryList(item.amount, item.unit, item.name);
+    });
+  });
+
+  state.isShoppingMode = true;
+  pushToCloud();
+  renderGroceries();
+  showToast("Alles zusammengefasst! Viel Erfolg beim Einkauf.");
+}
+
+function backToStaging() {
+  state.isShoppingMode = false;
+  pushToCloud();
+  renderGroceries();
+}
+
+function renderGroceries() {
+  const stagingView = document.getElementById('staging-view');
+  const shoppingView = document.getElementById('shopping-view');
+  const btnBack = document.getElementById('btn-back-to-staging');
+  const btnClear = document.getElementById('btn-clear-groceries');
+
+  if (!state.stagingRecipes) state.stagingRecipes = [];
+  if (!state.groceries) state.groceries = [];
+
+  // Ausschlaggebend ist nun der gespeicherte Status isShoppingMode
+  const inShopping = state.isShoppingMode;
+
+  if (!inShopping) {
+    // ANSICHT 1: STAGING (GEORDNET NACH REZEPTEN)
+    stagingView.classList.remove('hidden');
+    shoppingView.classList.add('hidden');
+    btnClear.classList.add('hidden');
+
+    // Button anzeigen, falls bereits Einkäufe in der zusammengefassten Liste existieren
+    if (state.groceries.length > 0) {
+      btnBack.innerText = "Zur Einkaufsliste →";
+      btnBack.onclick = () => { state.isShoppingMode = true; pushToCloud(); renderGroceries(); };
+      btnBack.classList.remove('hidden');
+    } else {
+      btnBack.classList.add('hidden');
+    }
+
+    const container = document.getElementById('staging-recipes-container');
+    container.innerHTML = "";
+
+    if (state.stagingRecipes.length === 0) {
+      container.innerHTML = `<div class="text-center py-8 text-stone-400 text-xs bg-white rounded-2xl border border-stone-200">Noch keine Rezepte für den Einkauf vorgemerkt.</div>`;
+      document.getElementById('btn-go-shopping').classList.add('hidden');
+      return;
+    }
+
+    document.getElementById('btn-go-shopping').classList.remove('hidden');
+
+    state.stagingRecipes.forEach(group => {
+      const card = document.createElement('div');
+      card.className = "bg-white rounded-2xl border border-stone-200 p-4 shadow-sm space-y-3";
+      
+      const itemsHtml = group.items.map((item, idx) => {
+        const amtStr = item.amount ? `${item.amount} ` : "";
+        const unitStr = item.unit ? `${item.unit} ` : "";
+        return `
+          <li class="flex items-center justify-between text-xs text-stone-700 bg-stone-50 px-2.5 py-1.5 rounded-lg">
+            <span>${amtStr}${unitStr}${item.name}</span>
+            <button onclick="removeStagingItem('${group.id}', ${idx})" class="text-stone-300 hover:text-red-500 font-bold ml-2">&times;</button>
+          </li>
+        `;
+      }).join('');
+
+      card.innerHTML = `
+        <div class="flex items-center justify-between border-b border-stone-100 pb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">${group.emoji}</span>
+            <div>
+              <h4 class="font-bold text-xs text-stone-900">${group.title}</h4>
+              <span class="text-[10px] text-stone-400">${group.servings} Portionen</span>
+            </div>
+          </div>
+          <button onclick="removeStagingRecipe('${group.id}')" class="text-xs bg-red-50 text-red-600 font-semibold px-2 py-1 rounded-lg active:scale-95">
+            Rezept entfernen
+          </button>
+        </div>
+        <ul class="space-y-1">${itemsHtml}</ul>
+      `;
+      container.appendChild(card);
+    });
+
+  } else {
+    // ANSICHT 2: ZUSAMMENGEFASSTE EINKAUFSLISTE
+    stagingView.classList.add('hidden');
+    shoppingView.classList.remove('hidden');
+    btnClear.classList.remove('hidden');
+
+    btnBack.innerText = "← Zurück zur Übersicht";
+    btnBack.onclick = backToStaging;
+    btnBack.classList.remove('hidden');
+
+    const list = document.getElementById('grocery-list');
+    list.innerHTML = "";
+
+    if (state.groceries.length === 0) {
+      list.innerHTML = `<div class="text-center py-8 text-stone-400 text-xs">Einkaufsliste ist leer.</div>`;
+      return;
+    }
+
+    state.groceries.forEach(item => {
+      const div = document.createElement('div');
+      div.className = "bg-white p-3 rounded-xl border border-stone-200 flex items-center justify-between";
+      
+      let labelText = item.name;
+      if (item.amount || item.unit) {
+        labelText = `${item.amount || ''} ${item.unit || ''} ${item.name}`.trim();
       }
+      const icon = getIngredientEmoji(item.name);
 
-      state.stagingRecipes.forEach(group => {
-        group.items.forEach(item => {
-          addIngredientToGroceryList(item.amount, item.unit, item.name);
-        });
-      });
-
-      state.stagingRecipes = [];
-      state.isShoppingMode = true;
-      pushToCloud();
-      renderGroceries();
-      showToast("Alles zusammengefasst! Viel Erfolg beim Einkauf.");
-    }
-
-    function backToStaging() {
-      state.isShoppingMode = false;
-      pushToCloud();
-      renderGroceries();
-    }
-
-    function renderGroceries() {
-      const stagingView = document.getElementById('staging-view');
-      const shoppingView = document.getElementById('shopping-view');
-      const btnBack = document.getElementById('btn-back-to-staging');
-      const btnClear = document.getElementById('btn-clear-groceries');
-
-      if (!state.stagingRecipes) state.stagingRecipes = [];
-      if (!state.groceries) state.groceries = [];
-
-      const inShopping = state.isShoppingMode || (state.stagingRecipes.length === 0 && state.groceries.length > 0);
-
-      if (!inShopping) {
-        stagingView.classList.remove('hidden');
-        shoppingView.classList.add('hidden');
-        btnBack.classList.add('hidden');
-        btnClear.classList.add('hidden');
-
-        const container = document.getElementById('staging-recipes-container');
-        container.innerHTML = "";
-
-        if (state.stagingRecipes.length === 0) {
-          container.innerHTML = `<div class="text-center py-8 text-stone-400 text-xs bg-white rounded-2xl border border-stone-200">Noch keine Rezepte für den Einkauf vorgemerkt.</div>`;
-          document.getElementById('btn-go-shopping').classList.add('hidden');
-          return;
-        }
+      div.innerHTML = `
+        <label class="flex items-center gap-3 flex-1 cursor-pointer">
+          <input type="checkbox" ${item.checked ? 'checked':''} onchange="toggleGrocery('${item.id}')" 
+                 class="rounded border-stone-300 text-brand-600 focus:ring-0 w-4 h-4">
+          <span class="text-base leading-none select-none">${icon}</span>
+          <span class="text-sm ${item.checked ? 'line-through text-stone-400':'text-stone-800'}">${labelText}</span>
+        </label>
+        <button onclick="removeGrocery('${item.id}')" class="text-stone-300 hover:text-red-500 text-lg leading-none px-2">&times;</button>
+      `;
+      list.appendChild(div);
+    });
+  }
+}
 
         document.getElementById('btn-go-shopping').classList.remove('hidden');
 
