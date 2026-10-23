@@ -116,7 +116,7 @@
         </div>
       </div>
 
-      <!-- Schnelleingabe für manuelle Artikel (immer sichtbar) -->
+      <!-- Schnelleingabe für manuelle Artikel (dauerhaft sichtbar) -->
       <datalist id="known-ingredients-list"></datalist>
       <form onsubmit="addGroceryManual(event)" class="grid grid-cols-12 gap-2 bg-white p-2.5 rounded-xl border border-stone-200 shadow-sm">
         <input type="number" step="any" id="grocery-amount-input" placeholder="Menge" class="col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none">
@@ -407,8 +407,8 @@
           if (data.record.plan) state.plan = data.record.plan;
           if (Array.isArray(data.record.excludedDays)) state.excludedDays = data.record.excludedDays;
           if (Array.isArray(data.record.stagingRecipes)) state.stagingRecipes = data.record.stagingRecipes;
-          if (Array.isArray(data.record.groceries)) state.groceries = data.record.groceries;
           if (Array.isArray(data.record.manualGroceries)) state.manualGroceries = data.record.manualGroceries;
+          if (Array.isArray(data.record.groceries)) state.groceries = data.record.groceries;
           if (typeof data.record.isShoppingMode === 'boolean') state.isShoppingMode = data.record.isShoppingMode;
 
           saveLocalData();
@@ -456,7 +456,7 @@
 
     // --- LOKALE DATEN & DEFAULTS ---
     function loadLocalData() {
-      const stored = localStorage.getItem("heimkueche_data_v8");
+      const stored = localStorage.getItem("heimkueche_data_v9");
       if (stored) {
         try { 
           state = Object.assign(state, JSON.parse(stored)); 
@@ -509,13 +509,14 @@
       state.plan = { "Montag": "1", "Dienstag": "2" };
       state.excludedDays = ["Sonntag"];
       state.stagingRecipes = [];
+      state.manualGroceries = [];
       state.groceries = [];
       state.isShoppingMode = false;
       saveLocalData();
     }
 
     function saveLocalData() {
-      localStorage.setItem("heimkueche_data_v8", JSON.stringify(state));
+      localStorage.setItem("heimkueche_data_v9", JSON.stringify(state));
     }
 
     function renderAll() {
@@ -1176,13 +1177,12 @@
       return "🛒";
     }
 
-    // --- EINKAUFSLISTE LOGIK (2-STUFIG) ---
+    // --- EINKAUFSLISTE LOGIK (2-STUFIG & DYNAMISCH) ---
     function addIngredientToGroceryList(amount, unit, name) {
       const cleanName = name.trim().toLowerCase();
       const cleanUnit = (unit || "").trim().toLowerCase();
 
       const existing = state.groceries.find(g => 
-        !g.checked && 
         (g.unit || "").trim().toLowerCase() === cleanUnit &&
         areSimilarWords(g.name, cleanName)
       );
@@ -1198,6 +1198,31 @@
           checked: false
         });
       }
+    }
+
+    // Berechnet die summierte Einkaufsliste frisch aus Vorbereitung + manuellen Artikeln
+    function recalculateConsolidatedGroceries() {
+      const previousChecked = new Set();
+      (state.groceries || []).forEach(g => {
+        if (g.checked) previousChecked.add(`${(g.unit || "").trim().toLowerCase()}__${g.name.trim().toLowerCase()}`);
+      });
+
+      state.groceries = [];
+
+      (state.stagingRecipes || []).forEach(group => {
+        group.items.forEach(item => {
+          addIngredientToGroceryList(item.amount, item.unit, item.name);
+        });
+      });
+
+      (state.manualGroceries || []).forEach(item => {
+        addIngredientToGroceryList(item.amount, item.unit, item.name);
+      });
+
+      state.groceries.forEach(g => {
+        const key = `${(g.unit || "").trim().toLowerCase()}__${g.name.trim().toLowerCase()}`;
+        if (previousChecked.has(key)) g.checked = true;
+      });
     }
 
     function addSelectedIngredientsToGrocery() {
@@ -1234,7 +1259,7 @@
         items: selectedItems
       });
 
-      state.isShoppingMode = false;
+      recalculateConsolidatedGroceries();
       pushToCloud();
       renderGroceries();
       showToast(`„${currentDetailRecipe.title}“ zur Vorbereitung hinzugefügt!`);
@@ -1272,112 +1297,52 @@
         return;
       }
 
-      state.isShoppingMode = false;
+      recalculateConsolidatedGroceries();
       pushToCloud();
       renderGroceries();
       switchTab('groceries');
       showToast(`${count} Gericht(e) zur Vorbereitung übertragen!`);
     }
 
-// Berechnet die Einkaufsliste komplett frisch aus Staging + manuellen Artikeln
-function recalculateConsolidatedGroceries() {
-  const previousChecked = new Set();
-  (state.groceries || []).forEach(g => {
-    if (g.checked) previousChecked.add(`${(g.unit || "").trim().toLowerCase()}__${g.name.trim().toLowerCase()}`);
-  });
-
-  state.groceries = [];
-
-  // 1. Alle Zutaten aus den noch existierenden Rezepten addieren
-  (state.stagingRecipes || []).forEach(group => {
-    group.items.forEach(item => {
-      addIngredientToGroceryList(item.amount, item.unit, item.name);
-    });
-  });
-
-  // 2. Alle manuellen Artikel (Klopapier etc.) addieren
-  (state.manualGroceries || []).forEach(item => {
-    addIngredientToGroceryList(item.amount, item.unit, item.name);
-  });
-
-  // 3. Bereits erledigte Häkchen wiederherstellen
-  state.groceries.forEach(g => {
-    const key = `${(g.unit || "").trim().toLowerCase()}__${g.name.trim().toLowerCase()}`;
-    if (previousChecked.has(key)) g.checked = true;
-  });
-}
-
-function consolidateGroceriesForShopping() {
-  if (state.stagingRecipes.length === 0 && (state.manualGroceries || []).length === 0) {
-    showToast("Keine Zutaten vorhanden.");
-    return;
-  }
-  recalculateConsolidatedGroceries();
-  state.isShoppingMode = true;
-  pushToCloud();
-  renderGroceries();
-  showToast("Einkaufsliste aktualisiert!");
-}
-
-function removeStagingRecipe(id) {
-  state.stagingRecipes = state.stagingRecipes.filter(sr => sr.id !== id);
-  // Wenn schon zusammengefasst wurde, direkt aus der summierten Liste mitentfernen:
-  if (state.isShoppingMode) {
-    recalculateConsolidatedGroceries();
-  }
-  pushToCloud();
-  renderGroceries();
-  showToast("Rezept und Zutaten entfernt.");
-}
-
-function removeStagingItem(recipeStagingId, itemIdx) {
-  const group = state.stagingRecipes.find(sr => sr.id === recipeStagingId);
-  if (group) {
-    group.items.splice(itemIdx, 1);
-    if (group.items.length === 0) {
-      state.stagingRecipes = state.stagingRecipes.filter(sr => sr.id !== recipeStagingId);
-    }
-    if (state.isShoppingMode) {
+    function removeStagingRecipe(id) {
+      state.stagingRecipes = state.stagingRecipes.filter(sr => sr.id !== id);
       recalculateConsolidatedGroceries();
+      pushToCloud();
+      renderGroceries();
+      showToast("Rezept und Zutaten entfernt.");
     }
-    pushToCloud();
-    renderGroceries();
-  }
-}
 
-function addGroceryManual(e) {
-  e.preventDefault();
-  const amtInput = document.getElementById('grocery-amount-input');
-  const unitInput = document.getElementById('grocery-unit-input');
-  const nameInput = document.getElementById('grocery-name-input');
+    function removeStagingItem(recipeStagingId, itemIdx) {
+      const group = state.stagingRecipes.find(sr => sr.id === recipeStagingId);
+      if (group) {
+        group.items.splice(itemIdx, 1);
+        if (group.items.length === 0) {
+          state.stagingRecipes = state.stagingRecipes.filter(sr => sr.id !== recipeStagingId);
+        }
+        recalculateConsolidatedGroceries();
+        pushToCloud();
+        renderGroceries();
+      }
+    }
 
-  const name = nameInput.value.trim();
-  const unit = unitInput.value;
-  const amt = parseFloat(amtInput.value);
+    function consolidateGroceriesForShopping() {
+      if (state.stagingRecipes.length === 0 && (state.manualGroceries || []).length === 0) {
+        showToast("Keine Zutaten vorhanden.");
+        return;
+      }
+      recalculateConsolidatedGroceries();
+      state.isShoppingMode = true;
+      pushToCloud();
+      renderGroceries();
+      showToast("Einkaufsliste zusammengefasst!");
+    }
 
-  if (!name) return;
+    function backToStaging() {
+      state.isShoppingMode = false;
+      pushToCloud();
+      renderGroceries();
+    }
 
-  if (!state.manualGroceries) state.manualGroceries = [];
-  state.manualGroceries.push({
-    id: Date.now() + Math.random().toString(),
-    amount: isNaN(amt) ? null : amt,
-    unit: unit,
-    name: name
-  });
-
-  amtInput.value = "";
-  unitInput.value = "";
-  nameInput.value = "";
-
-  if (state.isShoppingMode) {
-    recalculateConsolidatedGroceries();
-  }
-
-  pushToCloud();
-  renderGroceries();
-  showToast(`„${name}“ hinzugefügt`);
-}
-    
     function renderGroceries() {
       const stagingView = document.getElementById('staging-view');
       const shoppingView = document.getElementById('shopping-view');
@@ -1385,7 +1350,10 @@ function addGroceryManual(e) {
       const btnClear = document.getElementById('btn-clear-groceries');
 
       if (!state.stagingRecipes) state.stagingRecipes = [];
+      if (!state.manualGroceries) state.manualGroceries = [];
       if (!state.groceries) state.groceries = [];
+
+      recalculateConsolidatedGroceries();
 
       const inShopping = state.isShoppingMode;
 
@@ -1489,6 +1457,35 @@ function addGroceryManual(e) {
       }
     }
 
+    function addGroceryManual(e) {
+      e.preventDefault();
+      const amtInput = document.getElementById('grocery-amount-input');
+      const unitInput = document.getElementById('grocery-unit-input');
+      const nameInput = document.getElementById('grocery-name-input');
+
+      const name = nameInput.value.trim();
+      const unit = unitInput.value;
+      const amt = parseFloat(amtInput.value);
+
+      if (!name) return;
+
+      if (!state.manualGroceries) state.manualGroceries = [];
+      state.manualGroceries.push({
+        id: Date.now() + Math.random().toString(),
+        amount: isNaN(amt) ? null : amt,
+        unit: unit,
+        name: name
+      });
+
+      amtInput.value = "";
+      unitInput.value = "";
+      nameInput.value = "";
+
+      recalculateConsolidatedGroceries();
+      pushToCloud();
+      renderGroceries();
+      showToast(`„${name}“ hinzugefügt`);
+    }
 
     function toggleGrocery(id) {
       const item = state.groceries.find(g => g.id === id);
@@ -1499,18 +1496,21 @@ function addGroceryManual(e) {
       }
     }
 
-function removeGrocery(id) {
-  const item = state.groceries.find(g => g.id === id);
-  if (item && state.manualGroceries) {
-    // Falls es ein manueller Artikel war, auch aus manualGroceries löschen
-    state.manualGroceries = state.manualGroceries.filter(m => m.name.toLowerCase() !== item.name.toLowerCase());
-  }
-  state.groceries = state.groceries.filter(g => g.id !== id);
-  pushToCloud();
-  renderGroceries();
-}
+    function removeGrocery(id) {
+      const item = state.groceries.find(g => g.id === id);
+      if (item && state.manualGroceries) {
+        state.manualGroceries = state.manualGroceries.filter(m => m.name.toLowerCase() !== item.name.toLowerCase());
+      }
+      state.groceries = state.groceries.filter(g => g.id !== id);
+      pushToCloud();
+      renderGroceries();
+    }
 
     function clearCheckedGroceries() {
+      const checkedNames = state.groceries.filter(g => g.checked).map(g => g.name.toLowerCase());
+      if (state.manualGroceries) {
+        state.manualGroceries = state.manualGroceries.filter(m => !checkedNames.includes(m.name.toLowerCase()));
+      }
       state.groceries = state.groceries.filter(g => !g.checked);
       pushToCloud();
       renderGroceries();
