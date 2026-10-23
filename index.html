@@ -116,6 +116,31 @@
         </div>
       </div>
 
+      <!-- Schnelleingabe für manuelle Artikel (dauerhaft sichtbar) -->
+      <datalist id="known-ingredients-list"></datalist>
+      <form onsubmit="addGroceryManual(event)" class="grid grid-cols-12 gap-2 bg-white p-2.5 rounded-xl border border-stone-200 shadow-sm">
+        <input type="number" step="any" id="grocery-amount-input" placeholder="Menge" class="col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none">
+        <select id="grocery-unit-input" class="col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none text-stone-700">
+          <option value="">(keine)</option>
+          <option value="g">g</option>
+          <option value="kg">kg</option>
+          <option value="ml">ml</option>
+          <option value="l">l</option>
+          <option value="TL">TL</option>
+          <option value="EL">EL</option>
+          <option value="Prise">Prise</option>
+          <option value="Stk">Stk</option>
+          <option value="Zehe(n)">Zehe(n)</option>
+          <option value="Dose(n)">Dose(n)</option>
+          <option value="Bund">Bund</option>
+          <option value="Pkg">Pkg</option>
+          <option value="Rolle(n)">Rolle(n)</option>
+          <option value="Flasche(n)">Flasche(n)</option>
+        </select>
+        <input type="text" list="known-ingredients-list" id="grocery-name-input" placeholder="Artikel / Haushalt..." required class="col-span-5 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none">
+        <button type="submit" class="col-span-1 bg-brand-600 text-white font-bold rounded-lg text-sm flex items-center justify-center active:scale-95">+</button>
+      </form>
+
       <!-- STUFE 1: Nach Rezepten gruppiert (Prüf-Modus) -->
       <div id="staging-view" class="space-y-4">
         <div id="staging-recipes-container" class="space-y-3"></div>
@@ -125,30 +150,8 @@
         </button>
       </div>
 
-      <!-- STUFE 2: Manuelle Eingabe & kombinierte Liste (Einkaufs-Modus) -->
+      <!-- STUFE 2: Kombinierte Liste (Einkaufs-Modus) -->
       <div id="shopping-view" class="hidden space-y-4">
-        <datalist id="known-ingredients-list"></datalist>
-        <form onsubmit="addGroceryManual(event)" class="grid grid-cols-12 gap-2 bg-white p-2.5 rounded-xl border border-stone-200 shadow-sm">
-          <input type="number" step="any" id="grocery-amount-input" placeholder="Menge" class="col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none">
-          <select id="grocery-unit-input" class="col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none text-stone-700">
-            <option value="">(keine)</option>
-            <option value="g">g</option>
-            <option value="kg">kg</option>
-            <option value="ml">ml</option>
-            <option value="l">l</option>
-            <option value="TL">TL</option>
-            <option value="EL">EL</option>
-            <option value="Prise">Prise</option>
-            <option value="Stk">Stk</option>
-            <option value="Zehe(n)">Zehe(n)</option>
-            <option value="Dose(n)">Dose(n)</option>
-            <option value="Bund">Bund</option>
-            <option value="Pkg">Pkg</option>
-          </select>
-          <input type="text" list="known-ingredients-list" id="grocery-name-input" placeholder="Artikelname..." required class="col-span-5 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none">
-          <button type="submit" class="col-span-1 bg-brand-600 text-white font-bold rounded-lg text-sm flex items-center justify-center active:scale-95">+</button>
-        </form>
-
         <div id="grocery-list" class="space-y-1.5"></div>
       </div>
     </section>
@@ -345,7 +348,7 @@
 
     const DAYS = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
 
-    const UNITS = ["", "g", "kg", "ml", "l", "TL", "EL", "Prise", "Stk", "Zehe(n)", "Dose(n)", "Bund", "Pkg"];
+    const UNITS = ["", "g", "kg", "ml", "l", "TL", "EL", "Prise", "Stk", "Zehe(n)", "Dose(n)", "Bund", "Pkg", "Rolle(n)", "Flasche(n)"];
 
     const INGREDIENT_EXAMPLES = [
       { amount: 400, unit: "g", name: "Spaghetti" },
@@ -451,7 +454,7 @@
 
     // --- LOKALE DATEN & DEFAULTS ---
     function loadLocalData() {
-      const stored = localStorage.getItem("heimkueche_data_v6");
+      const stored = localStorage.getItem("heimkueche_data_v7");
       if (stored) {
         try { 
           state = Object.assign(state, JSON.parse(stored)); 
@@ -510,7 +513,7 @@
     }
 
     function saveLocalData() {
-      localStorage.setItem("heimkueche_data_v6", JSON.stringify(state));
+      localStorage.setItem("heimkueche_data_v7", JSON.stringify(state));
     }
 
     function renderAll() {
@@ -750,7 +753,6 @@
       document.getElementById('detail-tags').innerText = (r.tags || []).join(' • ');
       document.getElementById('detail-servings').innerText = r.servings;
 
-      // Schritte ausgeben
       const stepsContainer = document.getElementById('detail-steps');
       const stepsData = Array.isArray(r.steps) ? r.steps : (r.steps || "").split('\n').filter(s => s.trim());
       stepsContainer.innerHTML = stepsData.map((step, idx) => `
@@ -1101,12 +1103,21 @@
       return distance <= maxDistance;
     }
 
-    // --- ZUTATEN-EMOJI EINTEILUNG ---
+    // --- ZUTATEN- & HAUSHALTS-EMOJI EINTEILUNG ---
     function getIngredientEmoji(name) {
       if (!name) return "🛒";
       const str = name.toLowerCase();
 
       const EMOJI_MAP = [
+        // Haushalt & Drogerie
+        { emoji: "🧻", keywords: ["klopapier", "toilettenpapier", "küchenrolle", "taschentücher", "servietten"] },
+        { emoji: "🧼", keywords: ["seife", "duschgel", "shampoo", "spülmittel", "waschmittel", "putzmittel"] },
+        { emoji: "🪥", keywords: ["zahnpasta", "zahnbürste"] },
+        { emoji: "🗑️", keywords: ["müllbeutel", "alufolie", "backpapier", "frischhaltefolie"] },
+        { emoji: "☕", keywords: ["kaffee", "espresso", "tee", "kaffeebohnen"] },
+        { emoji: "🍺", keywords: ["bier", "wein", "sekt", "cola", "wasser", "saft"] },
+
+        // Gemüse & Kräuter
         { emoji: "🧄", keywords: ["knoblauch", "garlic"] },
         { emoji: "🧅", keywords: ["zwiebel", "schalotte", "lauch", "porree"] },
         { emoji: "🍅", keywords: ["tomate", "passata"] },
@@ -1122,23 +1133,33 @@
         { emoji: "🌿", keywords: ["basilikum", "petersilie", "rosmarin", "thymian", "oregano", "minze", "dill", "koriander", "kräuter"] },
         { emoji: "🌽", keywords: ["mais"] },
         { emoji: "🫛", keywords: ["erbse", "kichererbse", "bohne", "linse"] },
+
+        // Obst
         { emoji: "🍋", keywords: ["zitrone", "limette"] },
         { emoji: "🍎", keywords: ["apfel", "äpfel"] },
         { emoji: "🍌", keywords: ["banane"] },
         { emoji: "🍓", keywords: ["beere", "erdbeere", "himbeere", "blaubeere"] },
         { emoji: "🍊", keywords: ["orange", "clementine", "mandarine"] },
+
+        // Kohlenhydrate
         { emoji: "🍝", keywords: ["nudel", "spaghetti", "penne", "pasta", "tagliatelle", "fusilli"] },
         { emoji: "🍚", keywords: ["reis", "risotto"] },
         { emoji: "🍞", keywords: ["brot", "toast", "baguette", "brötchen"] },
         { emoji: "🌾", keywords: ["mehl", "haferflocken", "couscous", "bulgur", "quinoa"] },
+
+        // Milchprodukte & Eier
         { emoji: "🥛", keywords: ["milch", "sahne", "creme fraiche", "kokosmilch", "schmand"] },
         { emoji: "🧀", keywords: ["käse", "parmesan", "mozzarella", "feta", "gouda", "cheddar", "quark"] },
         { emoji: "🧈", keywords: ["butter", "margarine"] },
         { emoji: "🥚", keywords: ["ei", "eier"] },
+
+        // Fleisch, Fisch & Proteine
         { emoji: "🥩", keywords: ["fleisch", "hackfleisch", "rind", "schwein", "steak", "speck", "bacon"] },
         { emoji: "🍗", keywords: ["hähnchen", "huhn", "geflügel", "pute"] },
         { emoji: "🐟", keywords: ["fisch", "lachs", "thunfisch", "garnele", "garnelen"] },
         { emoji: "🧊", keywords: ["tofu"] },
+
+        // Vorrat, Öle & Gewürze
         { emoji: "🫒", keywords: ["olive", "olivenöl"] },
         { emoji: "🧴", keywords: ["öl", "essig", "senf", "mayo", "sauce", "ketchup", "sojasauce"] },
         { emoji: "🧂", keywords: ["salz", "pfeffer", "gewürz", "curry", "paprikapulver", "brühe"] },
@@ -1419,6 +1440,7 @@
 
       pushToCloud();
       renderGroceries();
+      showToast(`„${name}“ hinzugefügt`);
     }
 
     function toggleGrocery(id) {
