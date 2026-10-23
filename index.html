@@ -292,7 +292,7 @@
     // ⚙️ HIER DEINE JSONBIN-KEYS EINTRAGEN:
     // ==========================================
     const JSONBIN_ID = "DEINE_BIN_ID_HIER";
-    const JSONBIN_KEY = "$2a$10$DEIN_MASTER_KEY_HIER";
+    const JSONBIN_KEY = "$2a$10$y6kyGrnoX1xkRVsn1h44puSeCqiClneLZpxA.4P4JsubFVZ3o8q8i";
     const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
 
     const DAYS = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
@@ -343,7 +343,7 @@
       if (!JSONBIN_ID || JSONBIN_ID === "DEINE_BIN_ID_HIER") return;
       try {
         const res = await fetch(`${JSONBIN_URL}/latest`, {
-          headers: { "X-Master-Key": JSONBIN_KEY }
+          headers: { "X-Access-Key": JSONBIN_KEY }
         });
         if (!res.ok) throw new Error("Status " + res.status);
         const data = await res.json();
@@ -374,7 +374,7 @@
       try {
         const res = await fetch(JSONBIN_URL, {
           method: "PUT",
-          headers: { "Content-Type": "application/json", "X-Master-Key": JSONBIN_KEY },
+          headers: { "Content-Type": "application/json", "X-Access-Key": JSONBIN_KEY },
           body: JSON.stringify(state)
         });
         if (res.ok) updateSyncBadge("online", "Live Synchron");
