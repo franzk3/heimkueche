@@ -74,7 +74,7 @@
       <div class="bg-white border border-stone-200 rounded-2xl p-6 text-center shadow-sm">
         <div class="text-4xl mb-2">🎲</div>
         <h2 class="text-lg font-bold text-stone-900">Was kochen wir heute?</h2>
-        <p class="text-xs text-stone-500 mb-6">Lass dich überraschen oder filtere nach Wunsch.</p>
+        <p class="text-xs text-stone-500 mb-6">Lass dich überraschen oder wähle spontan.</p>
 
         <div id="random-result" class="min-h-[140px] flex items-center justify-center p-4 rounded-xl bg-stone-50 border border-dashed border-stone-300 mb-6">
           <p class="text-stone-400 text-sm">Tippe auf den Button für einen Vorschlag</p>
@@ -106,17 +106,31 @@
       <div id="week-grid" class="space-y-2.5"></div>
     </section>
 
-    <!-- TAB 4: EINKAUFSLISTE (AUTOMATISCH ADDIERT) -->
+    <!-- TAB 4: EINKAUFSLISTE -->
     <section id="tab-groceries" class="tab-content space-y-4">
       <div class="flex items-center justify-between">
         <h2 class="font-bold text-stone-900 text-base">Einkaufsliste</h2>
         <button onclick="clearCheckedGroceries()" class="text-xs text-stone-500 hover:text-stone-800 font-medium">Abgehakte löschen</button>
       </div>
 
-      <!-- Manuelle Eingabe mit strukturierter Einheit -->
+      <!-- Manuelle Eingabe mit Einheiten-Dropdown -->
       <form onsubmit="addGroceryManual(event)" class="grid grid-cols-12 gap-2 bg-white p-2.5 rounded-xl border border-stone-200 shadow-sm">
         <input type="number" step="any" id="grocery-amount-input" placeholder="Menge" class="col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none">
-        <input type="text" id="grocery-unit-input" placeholder="Einheit (z.B. g)" class="col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none">
+        <select id="grocery-unit-input" class="col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none text-stone-700">
+          <option value="">(keine)</option>
+          <option value="g">g</option>
+          <option value="kg">kg</option>
+          <option value="ml">ml</option>
+          <option value="l">l</option>
+          <option value="TL">TL</option>
+          <option value="EL">EL</option>
+          <option value="Prise">Prise</option>
+          <option value="Stk">Stk</option>
+          <option value="Zehe(n)">Zehe(n)</option>
+          <option value="Dose(n)">Dose(n)</option>
+          <option value="Bund">Bund</option>
+          <option value="Pkg">Pkg</option>
+        </select>
         <input type="text" id="grocery-name-input" placeholder="Artikelname..." required class="col-span-5 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none">
         <button type="submit" class="col-span-1 bg-brand-600 text-white font-bold rounded-lg text-sm flex items-center justify-center active:scale-95">+</button>
       </form>
@@ -125,7 +139,7 @@
     </section>
   </main>
 
-  <!-- Unten Navigation -->
+  <!-- Navigation unten -->
   <nav class="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-stone-200 nav-safe">
     <div class="max-w-2xl mx-auto flex items-center justify-around">
       <button onclick="switchTab('recipes')" id="nav-btn-recipes" class="nav-item active flex flex-col items-center gap-1 py-1 text-brand-600">
@@ -236,7 +250,7 @@
           </div>
         </div>
 
-        <!-- Kategorien zum Anhaken -->
+        <!-- Kategorien -->
         <div>
           <div class="flex items-center justify-between mb-1.5">
             <label class="block text-xs font-bold text-stone-600">Kategorien auswählen</label>
@@ -245,21 +259,21 @@
           <div id="form-category-checkboxes" class="flex flex-wrap gap-1.5 p-2 bg-stone-50 rounded-xl border border-stone-200 max-h-32 overflow-y-auto"></div>
         </div>
 
-        <!-- Strukturierte Zutatenliste (Menge | Einheit | Name) -->
+        <!-- Strukturierte Zutatenzeilen -->
         <div>
-          <div class="flex items-center justify-between mb-1">
+          <div class="flex items-center justify-between mb-1.5">
             <label class="block text-xs font-bold text-stone-600">Zutaten</label>
-            <span class="text-[10px] text-stone-400">z. B. [ 12 ] [ gramm ] [ knoblauch ]</span>
+            <span class="text-[10px] text-stone-400">Menge • Einheit • Zutat</span>
           </div>
           <div id="form-ingredients-rows" class="space-y-2 mb-2"></div>
-          <button type="button" onclick="addIngredientRow()" class="w-full py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold text-xs rounded-xl transition-all">
+          <button type="button" onclick="addIngredientRow()" class="w-full py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold text-xs rounded-xl transition-all">
             + Zutat hinzufügen
           </button>
         </div>
 
         <div>
           <label class="block text-xs font-bold text-stone-600 mb-1">Zubereitungsschritte</label>
-          <textarea id="form-steps" rows="4" required placeholder="1. Wasser kochen...&#10;2. Sauce zubereiten..." 
+          <textarea id="form-steps" rows="4" required placeholder="1. Wasser aufsetzen...&#10;2. Zwiebeln anbraten..." 
                     class="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"></textarea>
         </div>
         <div class="flex gap-2 pt-2">
@@ -277,18 +291,33 @@
     // ==========================================
     // ⚙️ HIER DEINE JSONBIN-KEYS EINTRAGEN:
     // ==========================================
-    const JSONBIN_ID = "6adb8714ffd5d160538623fd";
-    const JSONBIN_KEY = "$2a$10$knHXD2d6otKlVcnLpcP6Pe1m9MROzjEpKV2Z6vYI4NKGsfoa4WiI.";
+    const JSONBIN_ID = "DEINE_BIN_ID_HIER";
+    const JSONBIN_KEY = "$2a$10$DEIN_MASTER_KEY_HIER";
     const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
 
     const DAYS = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
+
+    // Gängige Einheiten fürs Dropdown
+    const UNITS = ["", "g", "kg", "ml", "l", "TL", "EL", "Prise", "Stk", "Zehe(n)", "Dose(n)", "Bund", "Pkg"];
+
+    // Abwechslungsreiche Beispiele für neue Zeilen
+    const INGREDIENT_EXAMPLES = [
+      { amount: 400, unit: "g", name: "Spaghetti" },
+      { amount: 2, unit: "Zehe(n)", name: "Knoblauch" },
+      { amount: 1, unit: "Dose(n)", name: "gehackte Tomaten" },
+      { amount: 1, unit: "Bund", name: "Basilikum" },
+      { amount: 100, unit: "ml", name: "Sahne" },
+      { amount: 1, unit: "EL", name: "Olivenöl" },
+      { amount: 1, unit: "Prise", name: "Salz & Pfeffer" },
+      { amount: 250, unit: "g", name: "Champignons" }
+    ];
 
     let state = {
       categories: ["Vegetarisch", "Unter 30 Min", "Pasta", "Fleisch", "Suppe"],
       recipes: [],
       plan: {},
       excludedDays: [],
-      groceries: [] // Format: [ { id, amount, unit, name, checked } ]
+      groceries: []
     };
 
     let activeFilter = 'all';
@@ -368,7 +397,7 @@
 
     // --- LOKALE DATEN & DEFAULT REZEPTE ---
     function loadLocalData() {
-      const stored = localStorage.getItem("heimkueche_data_v3");
+      const stored = localStorage.getItem("heimkueche_data_v4");
       if (stored) {
         try { 
           state = Object.assign(state, JSON.parse(stored)); 
@@ -386,27 +415,27 @@
           tags: ["Pasta", "Unter 30 Min", "Vegetarisch"],
           ingredients: [
             { amount: 400, unit: "g", name: "Spaghetti" },
-            { amount: 1, unit: "Dose", name: "gehackte Tomaten" },
+            { amount: 1, unit: "Dose(n)", name: "gehackte Tomaten" },
             { amount: 1, unit: "Stk", name: "Zwiebel" },
-            { amount: 2, unit: "Zehen", name: "Knoblauch" },
+            { amount: 2, unit: "Zehe(n)", name: "Knoblauch" },
             { amount: 100, unit: "g", name: "Sahne" }
           ],
-          steps: "1. Zwiebeln und Knoblauch anbraten.\n2. Tomaten, 700ml Brühe und Nudeln in den Topf geben.\n3. 10 Min köcheln, Sahne unterrühren."
+          steps: "1. Zwiebeln und Knoblauch hacken und kurz anbraten.\n2. Tomaten, 700ml Brühe und Nudeln in den Topf geben.\n3. 10 Minuten köcheln lassen, bis die Nudeln gar sind.\n4. Sahne unterrühren und abschmecken."
         },
         {
           id: "2",
-          title: "Kichererbsen-Curry",
+          title: "Kichererbsen-Kokos-Curry",
           emoji: "🍛",
           time: 25,
           servings: 3,
           tags: ["Vegetarisch", "Unter 30 Min"],
           ingredients: [
-            { amount: 2, unit: "Dosen", name: "Kichererbsen" },
-            { amount: 1, unit: "Dose", name: "Kokosmilch" },
-            { amount: 200, unit: "g", name: "Reis" },
-            { amount: 2, unit: "Zehen", name: "Knoblauch" }
+            { amount: 2, unit: "Dose(n)", name: "Kichererbsen" },
+            { amount: 1, unit: "Dose(n)", name: "Kokosmilch" },
+            { amount: 200, unit: "g", name: "Basmatireis" },
+            { amount: 2, unit: "Zehe(n)", name: "Knoblauch" }
           ],
-          steps: "1. Reis kochen.\n2. Curry anrösten, Kokosmilch und Kichererbsen zugeben.\n3. 10 Minuten köcheln lassen."
+          steps: "1. Reis kochen.\n2. Knoblauch anbraten, Kokosmilch und Kichererbsen zugeben.\n3. 10 Minuten köcheln lassen."
         }
       ];
       state.plan = { "Montag": "1", "Dienstag": "2" };
@@ -415,7 +444,7 @@
     }
 
     function saveLocalData() {
-      localStorage.setItem("heimkueche_data_v3", JSON.stringify(state));
+      localStorage.setItem("heimkueche_data_v4", JSON.stringify(state));
     }
 
     function renderAll() {
@@ -437,7 +466,7 @@
       activeBtn.classList.add('text-brand-600');
     }
 
-    // --- KATEGORIEN VERWALTUNG ---
+    // --- KATEGORIEN ---
     function renderCategoryFilters() {
       const bar = document.getElementById('category-filter-bar');
       bar.innerHTML = `
@@ -524,15 +553,29 @@
       });
     }
 
-    // --- STRUKTURIERTE ZUTATEN-ZEILEN IM FORMULAR ---
+    // --- STRUKTURIERTE ZUTATENZEILEN MIT DROPDOWN & DYNAMISCHEN BEISPIELEN ---
     function addIngredientRow(amount = "", unit = "", name = "") {
       const container = document.getElementById('form-ingredients-rows');
+      const rowIndex = container.children.length;
+      
+      // Wähle für jede neue Zeile ein anderes passendes Beispiel
+      const example = INGREDIENT_EXAMPLES[rowIndex % INGREDIENT_EXAMPLES.length];
+
+      // Option-HTML für das Einheiten-Dropdown zusammenstellen
+      const unitOptionsHtml = UNITS.map(u => {
+        const label = u === "" ? "(keine)" : u;
+        const selected = (unit === u || (!unit && u === example.unit && amount === "")) ? "selected" : "";
+        return `<option value="${u}" ${selected}>${label}</option>`;
+      }).join('');
+
       const row = document.createElement('div');
       row.className = "ingredient-row grid grid-cols-12 gap-1.5 items-center";
       row.innerHTML = `
-        <input type="number" step="any" placeholder="12" value="${amount}" class="ing-amount col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">
-        <input type="text" placeholder="gramm" value="${unit}" class="ing-unit col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">
-        <input type="text" placeholder="knoblauch" value="${name}" required class="ing-name col-span-5 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">
+        <input type="number" step="any" placeholder="${example.amount}" value="${amount}" class="ing-amount col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">
+        <select class="ing-unit col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 text-stone-700">
+          ${unitOptionsHtml}
+        </select>
+        <input type="text" placeholder="${example.name}" value="${name}" required class="ing-name col-span-5 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">
         <button type="button" onclick="this.parentElement.remove()" class="col-span-1 text-stone-400 hover:text-red-500 font-bold text-lg leading-none text-center">&times;</button>
       `;
       container.appendChild(row);
@@ -583,7 +626,7 @@
       });
     }
 
-    // --- REZEPT DETAILS & PORTIONSRECHNER ---
+    // --- DETAILS & PORTIONSRECHNER ---
     function openDetailModal(id) {
       const r = state.recipes.find(x => x.id === id);
       if (!r) return;
@@ -634,7 +677,7 @@
       });
     }
 
-    // --- FORMULAR: SPEICHERN & EDITIEREN ---
+    // --- REZEPT FORMULAR ---
     function openRecipeModal(editId = null) {
       closeModal('detail-modal');
       const form = document.querySelector('#form-modal form');
@@ -671,6 +714,7 @@
         document.getElementById('form-id').value = "";
         document.getElementById('form-heading').innerText = "Neues Rezept";
         renderCategoryCheckboxes([]);
+        // Initial 3 Zeilen mit unterschiedlichen Beispielen anlegen
         addIngredientRow();
         addIngredientRow();
         addIngredientRow();
@@ -687,7 +731,6 @@
       const id = document.getElementById('form-id').value || Date.now().toString();
       const checkedTags = Array.from(document.querySelectorAll('#form-category-checkboxes input:checked')).map(cb => cb.value);
 
-      // Zutaten aus den Zeilen auslesen
       const ingredientRows = document.querySelectorAll('#form-ingredients-rows .ingredient-row');
       const ingredients = [];
       ingredientRows.forEach(row => {
@@ -834,12 +877,12 @@
       showToast("Aktive Tage geplant!");
     }
 
-    // --- EINKAUFSLISTE MIT AUTOMATISCHER ADDIERUNG ---
+    // --- EINKAUFSLISTE (AUTOMATISCHE ADDIERUNG) ---
     function addIngredientToGroceryList(amount, unit, name) {
       const cleanName = name.trim().toLowerCase();
       const cleanUnit = (unit || "").trim().toLowerCase();
 
-      // Suche nach exakt gleichem Zutatennamen mit gleicher Einheit
+      // Suche nach Zutat mit gleichem Namen und gleicher Einheit
       const existing = state.groceries.find(g => 
         !g.checked && 
         g.name.trim().toLowerCase() === cleanName && 
@@ -928,7 +971,7 @@
       const nameInput = document.getElementById('grocery-name-input');
 
       const name = nameInput.value.trim();
-      const unit = unitInput.value.trim();
+      const unit = unitInput.value;
       const amt = parseFloat(amtInput.value);
 
       if (!name) return;
