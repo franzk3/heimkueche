@@ -1146,10 +1146,13 @@ function addIngredientToGroceryList(amount, unit, name) {
           labelText = `${item.amount || ''} ${item.unit || ''} ${item.name}`.trim();
         }
 
+       const icon = getIngredientEmoji(item.name);
+
         div.innerHTML = `
           <label class="flex items-center gap-3 flex-1 cursor-pointer">
             <input type="checkbox" ${item.checked ? 'checked':''} onchange="toggleGrocery('${item.id}')" 
                    class="rounded border-stone-300 text-brand-600 focus:ring-0 w-4 h-4">
+            <span class="text-base leading-none select-none">${icon}</span>
             <span class="text-sm ${item.checked ? 'line-through text-stone-400':'text-stone-800'}">${labelText}</span>
           </label>
           <button onclick="removeGrocery('${item.id}')" class="text-stone-300 hover:text-red-500 text-lg leading-none px-2">&times;</button>
@@ -1157,6 +1160,72 @@ function addIngredientToGroceryList(amount, unit, name) {
         list.appendChild(div);
       });
     }
+
+    // --- ZUTATEN-EMOJI-ERKENNUNG ---
+function getIngredientEmoji(name) {
+  if (!name) return "🛒";
+  const str = name.toLowerCase();
+
+  const EMOJI_MAP = [
+    // Gemüse & Kräuter
+    { emoji: "🧄", keywords: ["knoblauch", "garlic"] },
+    { emoji: "🧅", keywords: ["zwiebel", "schalotte", "lauch", "porree"] },
+    { emoji: "🍅", keywords: ["tomate", "passata"] },
+    { emoji: "🥔", keywords: ["kartoffel", "erdapfel", "süßkartoffel"] },
+    { emoji: "🥕", keywords: ["karotte", "möhre", "rübe"] },
+    { emoji: "🥒", keywords: ["gurke", "zucchini"] },
+    { emoji: "🌶️", keywords: ["chili", "peperoni", "jalapeno"] },
+    { emoji: "🫑", keywords: ["paprika"] },
+    { emoji: "🍄", keywords: ["pilz", "champignon", "steinpilz"] },
+    { emoji: "🥦", keywords: ["brokkoli", "blumenkohl"] },
+    { emoji: "🥬", keywords: ["salat", "spinat", "rucola", "kohl"] },
+    { emoji: "🥑", keywords: ["avocado"] },
+    { emoji: "🌿", keywords: ["basilikum", "petersilie", "rosmarin", "thymian", "oregano", "minze", "dill", "koriander", "kräuter"] },
+    { emoji: "🌽", keywords: ["mais"] },
+    { emoji: "🫛", keywords: ["erbse", "kichererbse", "bohne", "linse"] },
+
+    // Obst & Früchte
+    { emoji: "🍋", keywords: ["zitrone", "limette"] },
+    { emoji: "🍎", keywords: ["apfel", "äpfel"] },
+    { emoji: "🍌", keywords: ["banane"] },
+    { emoji: "🍓", keywords: ["beere", "erdbeere", "himbeere", "blaubeere"] },
+    { emoji: "🍊", keywords: ["orange", "clementine", "mandarine"] },
+
+    // Kohlenhydrate & Getreide
+    { emoji: "🍝", keywords: ["nudel", "spaghetti", "penne", "pasta", "tagliatelle", "fusilli"] },
+    { emoji: "🍚", keywords: ["reis", "risotto"] },
+    { emoji: "🍞", keywords: ["brot", "toast", "baguette", "brötchen"] },
+    { emoji: "🌾", keywords: ["mehl", "haferflocken", "couscous", "bulgur", "quinoa"] },
+
+    // Milchprodukte & Eier
+    { emoji: "🥛", keywords: ["milch", "sahne", "creme fraiche", "kokosmilch", "schmand"] },
+    { emoji: "🧀", keywords: ["käse", "parmesan", "mozzarella", "feta", "gouda", "cheddar", "quark"] },
+    { emoji: "🧈", keywords: ["butter", "margarine"] },
+    { emoji: "🥚", keywords: ["ei", "eier"] },
+
+    // Fleisch, Fisch & Tofu
+    { emoji: "🥩", keywords: ["fleisch", "hackfleisch", "rind", "schwein", "steak", "speck", "bacon"] },
+    { emoji: "🍗", keywords: ["hähnchen", "huhn", "geflügel", "pute"] },
+    { emoji: "🐟", keywords: ["fisch", "lachs", "thunfisch", "garnele", "garnelen"] },
+    { emoji: "🧊", keywords: ["tofu"] },
+
+    // Gewürze, Öle & Vorrat
+    { emoji: "🫒", keywords: ["olive", "olivenöl"] },
+    { emoji: "🧴", keywords: ["öl", "essig", "senf", "mayo", "sauce", "ketchup", "sojasauce"] },
+    { emoji: "🧂", keywords: ["salz", "pfeffer", "gewürz", "curry", "paprikapulver", "brühe"] },
+    { emoji: "🍯", keywords: ["zucker", "honig", "sirup", "agavendicksaft"] },
+    { emoji: "🍫", keywords: ["schokolade", "kakao"] },
+    { emoji: "🥜", keywords: ["nuss", "nüsse", "mandel", "erdnuss", "cashew", "walnuss", "pinienkerne"] }
+  ];
+
+  for (const item of EMOJI_MAP) {
+    if (item.keywords.some(kw => str.includes(kw))) {
+      return item.emoji;
+    }
+  }
+
+  return "🛒"; // Fallback, falls die Zutat nicht zugeordnet werden kann
+}
 
     function addGroceryManual(e) {
       e.preventDefault();
