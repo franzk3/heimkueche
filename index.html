@@ -139,7 +139,7 @@
     </section>
   </main>
 
-  <!-- Navigation unten -->
+  <!-- Unten Navigation -->
   <nav class="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-stone-200 nav-safe">
     <div class="max-w-2xl mx-auto flex items-center justify-around">
       <button onclick="switchTab('recipes')" id="nav-btn-recipes" class="nav-item active flex flex-col items-center gap-1 py-1 text-brand-600">
@@ -289,10 +289,10 @@
   <!-- JAVASCRIPT LOGIK -->
   <script>
     // ==========================================
-    // ⚙️ HIER DEINE JSONBIN-KEYS EINTRAGEN:
+    // ⚙️ HIER DEINE JSONBIN-DATEN EINTRAGEN:
     // ==========================================
-    const JSONBIN_ID = "DEINE_BIN_ID_HIER";
-    const JSONBIN_KEY = "$2a$10$y6kyGrnoX1xkRVsn1h44puSeCqiClneLZpxA.4P4JsubFVZ3o8q8i";
+    const JSONBIN_ID = "6adb8714ffd5d160538623fd";
+    const JSONBIN_KEY = "$2a$10$y6kyGrnoX1xkRVsn1h44puSeCqiClneLZpxA.4P4JsubFVZ3o8q8i"; // Hier deinen X-Access-Key einsetzen!
     const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
 
     const DAYS = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
@@ -329,7 +329,7 @@
       try { loadLocalData(); } catch(e) {}
       renderAll();
 
-      if (JSONBIN_ID && JSONBIN_ID !== "DEINE_BIN_ID_HIER") {
+      if (JSONBIN_ID && JSONBIN_ID !== "DEINE_BIN_ID_HIER" && JSONBIN_KEY && JSONBIN_KEY !== "DEIN_ACCESS_KEY_HIER") {
         updateSyncBadge("loading", "Verbinde...");
         pullFromCloud();
         setInterval(pullFromCloud, 30000);
@@ -338,9 +338,9 @@
       }
     });
 
-    // --- SYNC ENGINE ---
+    // --- SYNC ENGINE MIT X-ACCESS-KEY ---
     async function pullFromCloud() {
-      if (!JSONBIN_ID || JSONBIN_ID === "DEINE_BIN_ID_HIER") return;
+      if (!JSONBIN_ID || JSONBIN_ID === "DEINE_BIN_ID_HIER" || !JSONBIN_KEY || JSONBIN_KEY === "DEIN_ACCESS_KEY_HIER") return;
       try {
         const res = await fetch(`${JSONBIN_URL}/latest`, {
           headers: { "X-Access-Key": JSONBIN_KEY }
@@ -368,13 +368,16 @@
 
     async function pushToCloud() {
       saveLocalData();
-      if (!JSONBIN_ID || JSONBIN_ID === "DEINE_BIN_ID_HIER") return;
+      if (!JSONBIN_ID || JSONBIN_ID === "DEINE_BIN_ID_HIER" || !JSONBIN_KEY || JSONBIN_KEY === "DEIN_ACCESS_KEY_HIER") return;
 
       updateSyncBadge("loading", "Speichere...");
       try {
         const res = await fetch(JSONBIN_URL, {
           method: "PUT",
-          headers: { "Content-Type": "application/json", "X-Access-Key": JSONBIN_KEY },
+          headers: { 
+            "Content-Type": "application/json", 
+            "X-Access-Key": JSONBIN_KEY 
+          },
           body: JSON.stringify(state)
         });
         if (res.ok) updateSyncBadge("online", "Live Synchron");
@@ -553,15 +556,12 @@
       });
     }
 
-    // --- STRUKTURIERTE ZUTATENZEILEN MIT DROPDOWN & DYNAMISCHEN BEISPIELEN ---
+    // --- STRUKTURIERTE ZUTATENZEILEN ---
     function addIngredientRow(amount = "", unit = "", name = "") {
       const container = document.getElementById('form-ingredients-rows');
       const rowIndex = container.children.length;
-      
-      // Wähle für jede neue Zeile ein anderes passendes Beispiel
       const example = INGREDIENT_EXAMPLES[rowIndex % INGREDIENT_EXAMPLES.length];
 
-      // Option-HTML für das Einheiten-Dropdown zusammenstellen
       const unitOptionsHtml = UNITS.map(u => {
         const label = u === "" ? "(keine)" : u;
         const selected = (unit === u || (!unit && u === example.unit && amount === "")) ? "selected" : "";
@@ -714,7 +714,6 @@
         document.getElementById('form-id').value = "";
         document.getElementById('form-heading').innerText = "Neues Rezept";
         renderCategoryCheckboxes([]);
-        // Initial 3 Zeilen mit unterschiedlichen Beispielen anlegen
         addIngredientRow();
         addIngredientRow();
         addIngredientRow();
