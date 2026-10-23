@@ -113,6 +113,8 @@
         <button onclick="clearCheckedGroceries()" class="text-xs text-stone-500 hover:text-stone-800 font-medium">Abgehakte löschen</button>
       </div>
 
+      <!-- Liste mit allen bekannten Zutaten für Auto-Vervollständigung -->
+<datalist id="known-ingredients-list"></datalist>
       <!-- Manuelle Eingabe mit Einheiten-Dropdown -->
       <form onsubmit="addGroceryManual(event)" class="grid grid-cols-12 gap-2 bg-white p-2.5 rounded-xl border border-stone-200 shadow-sm">
         <input type="number" step="any" id="grocery-amount-input" placeholder="Menge" class="col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none">
@@ -474,6 +476,7 @@
       renderRecipes();
       renderPlan();
       renderGroceries();
+      updateIngredientsDatalist();
     }
 
     function switchTab(tabId) {
@@ -576,29 +579,50 @@
     }
 
     // --- STRUKTURIERTE ZUTATENZEILEN ---
-    function addIngredientRow(amount = "", unit = "", name = "") {
-      const container = document.getElementById('form-ingredients-rows');
-      const rowIndex = container.children.length;
-      const example = INGREDIENT_EXAMPLES[rowIndex % INGREDIENT_EXAMPLES.length];
+  function addIngredientRow(amount = "", unit = "", name = "") {
+  const container = document.getElementById('form-ingredients-rows');
+  const rowIndex = container.children.length;
+  const example = INGREDIENT_EXAMPLES[rowIndex % INGREDIENT_EXAMPLES.length];
 
-      const unitOptionsHtml = UNITS.map(u => {
-        const label = u === "" ? "(keine)" : u;
-        const selected = (unit === u || (!unit && u === example.unit && amount === "")) ? "selected" : "";
-        return `<option value="${u}" ${selected}>${label}</option>`;
-      }).join('');
+  const unitOptionsHtml = UNITS.map(u => {
+    const label = u === "" ? "(keine)" : u;
+    const selected = (unit === u || (!unit && u === example.unit && amount === "")) ? "selected" : "";
+    return `<option value="${u}" ${selected}>${label}</option>`;
+  }).join('');
 
-      const row = document.createElement('div');
-      row.className = "ingredient-row grid grid-cols-12 gap-1.5 items-center";
-      row.innerHTML = `
-        <input type="number" step="any" placeholder="${example.amount}" value="${amount}" class="ing-amount col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">
-        <select class="ing-unit col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 text-stone-700">
-          ${unitOptionsHtml}
-        </select>
-        <input type="text" placeholder="${example.name}" value="${name}" required class="ing-name col-span-5 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">
-        <button type="button" onclick="this.parentElement.remove()" class="col-span-1 text-stone-400 hover:text-red-500 font-bold text-lg leading-none text-center">&times;</button>
-      `;
-      container.appendChild(row);
+  const row = document.createElement('div');
+  row.className = "ingredient-row grid grid-cols-12 gap-1.5 items-center";
+  row.innerHTML = `
+    <input type="number" step="any" placeholder="${example.amount}" value="${amount}" class="ing-amount col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">
+    <select class="ing-unit col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 text-stone-700">
+      ${unitOptionsHtml}
+    </select>
+    <input type="text" list="known-ingredients-list" placeholder="${example.name}" value="${name}" required class="ing-name col-span-5 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">
+    <button type="button" onclick="this.parentElement.remove()" class="col-span-1 text-stone-400 hover:text-red-500 font-bold text-lg leading-none text-center">&times;</button>
+  `;
+  container.appendChild(row);
+}
+
+    // Aktualisiert die Vorschlagsliste aus allen gespeicherten Rezepten
+function updateIngredientsDatalist() {
+  const datalist = document.getElementById('known-ingredients-list');
+  if (!datalist) return;
+  
+  const names = new Set();
+  state.recipes.forEach(r => {
+    if (r.ingredients) {
+      r.ingredients.forEach(i => {
+        const val = typeof i === 'string' ? i : i.name;
+        if (val && val.trim()) names.add(val.trim());
+      });
     }
+  });
+
+  datalist.innerHTML = Array.from(names)
+    .sort()
+    .map(name => `<option value="${name}"></option>`)
+    .join('');
+}
 
     // --- REZEPTE RENDERN ---
     function renderRecipes() {
