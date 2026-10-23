@@ -293,11 +293,17 @@
           </button>
         </div>
 
-        <div>
-          <label class="block text-xs font-bold text-stone-600 mb-1">Zubereitungsschritte</label>
-          <textarea id="form-steps" rows="4" required placeholder="1. Wasser aufsetzen...&#10;2. Zwiebeln anbraten..." 
-                    class="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"></textarea>
-        </div>
+      <!-- Dynamische Zubereitungsschritte -->
+<div>
+  <div class="flex items-center justify-between mb-1.5">
+    <label class="block text-xs font-bold text-stone-600">Zubereitungsschritte</label>
+    <span class="text-[10px] text-stone-400">Schritt für Schritt</span>
+  </div>
+  <div id="form-steps-rows" class="space-y-2 mb-2"></div>
+  <button type="button" onclick="addStepRow()" class="w-full py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold text-xs rounded-xl transition-all">
+    + Schritt hinzufügen
+  </button>
+</div>
         <div class="flex gap-2 pt-2">
           <button type="button" id="btn-delete-recipe" onclick="deleteCurrentRecipe()" class="hidden flex-1 bg-red-50 text-red-600 font-semibold py-3 rounded-xl active:scale-95">Löschen</button>
           <button type="submit" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl shadow-md active:scale-95">Speichern</button>
@@ -603,6 +609,29 @@
   container.appendChild(row);
 }
 
+    // --- DYNAMISCHE SCHRITTE ---
+function addStepRow(text = "") {
+  const container = document.getElementById('form-steps-rows');
+  const stepNumber = container.children.length + 1;
+
+  const row = document.createElement('div');
+  row.className = "step-row flex items-start gap-2";
+  row.innerHTML = `
+    <span class="step-num w-6 h-8 flex items-center justify-center rounded-lg bg-stone-200 text-stone-700 text-xs font-bold flex-shrink-0 mt-0.5">${stepNumber}</span>
+    <textarea rows="2" required placeholder="Was ist in Schritt ${stepNumber} zu tun?" class="step-text flex-1 bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">${text}</textarea>
+    <button type="button" onclick="removeStepRow(this)" class="w-6 h-8 text-stone-400 hover:text-red-500 font-bold text-lg flex items-center justify-center leading-none mt-0.5">&times;</button>
+  `;
+  container.appendChild(row);
+}
+
+function removeStepRow(btn) {
+  btn.closest('.step-row').remove();
+  // Nummern nach dem Löschen neu durchzählen
+  document.querySelectorAll('#form-steps-rows .step-row').forEach((row, idx) => {
+    row.querySelector('.step-num').innerText = idx + 1;
+  });
+}
+
     // Aktualisiert die Vorschlagsliste aus allen gespeicherten Rezepten
 function updateIngredientsDatalist() {
   const datalist = document.getElementById('known-ingredients-list');
@@ -692,7 +721,14 @@ function updateIngredientsDatalist() {
       document.getElementById('detail-time').innerText = `⏱️ ${r.time} Min`;
       document.getElementById('detail-tags').innerText = (r.tags || []).join(' • ');
       document.getElementById('detail-servings').innerText = r.servings;
-      document.getElementById('detail-steps').innerText = r.steps;
+const stepsContainer = document.getElementById('detail-steps');
+const stepsData = Array.isArray(r.steps) ? r.steps : (r.steps || "").split('\n').filter(s => s.trim());
+stepsContainer.innerHTML = stepsData.map((step, idx) => `
+  <div class="flex items-start gap-3">
+    <span class="w-6 h-6 rounded-full bg-brand-50 text-brand-600 font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">${idx + 1}</span>
+    <p class="text-stone-700 text-sm leading-relaxed">${step.replace(/^\d+[\.\)]\s*/, '')}</p>
+  </div>
+`).join('');
 
       renderIngredientsList();
       openModal('detail-modal');
@@ -795,6 +831,7 @@ function updateIngredientsDatalist() {
       form.reset();
       removeImageFromForm();
       document.getElementById('form-ingredients-rows').innerHTML = "";
+      document.getElementById('form-steps-rows').innerHTML = "";
       document.getElementById('btn-delete-recipe').classList.add('hidden');
 
       if (editId) {
@@ -805,7 +842,13 @@ function updateIngredientsDatalist() {
           document.getElementById('form-emoji').value = r.emoji;
           document.getElementById('form-time').value = r.time;
           document.getElementById('form-servings').value = r.servings;
-          document.getElementById('form-steps').value = r.steps;
+// Bestehende Schritte einladen (egal ob Array oder alter Fließtext)
+const stepsList = Array.isArray(r.steps) ? r.steps : (r.steps || "").split('\n').filter(s => s.trim());
+if (stepsList.length > 0) {
+  stepsList.forEach(s => addStepRow(s.replace(/^\d+[\.\)]\s*/, '')));
+} else {
+  addStepRow();
+}
           document.getElementById('btn-delete-recipe').classList.remove('hidden');
           document.getElementById('form-heading').innerText = "Rezept bearbeiten";
           renderCategoryCheckboxes(r.tags || []);
@@ -832,6 +875,7 @@ function updateIngredientsDatalist() {
         document.getElementById('form-heading').innerText = "Neues Rezept";
         renderCategoryCheckboxes([]);
         addIngredientRow();
+        addStepRow(); // 1 Schritt als Standardvorgabe
       }
       openModal('form-modal');
     }
@@ -869,7 +913,9 @@ function updateIngredientsDatalist() {
         servings: parseInt(document.getElementById('form-servings').value) || 4,
         tags: checkedTags,
         ingredients: ingredients,
-        steps: document.getElementById('form-steps').value.trim()
+        steps: Array.from(document.querySelectorAll('#form-steps-rows .step-text'))
+            .map(t => t.value.trim())
+            .filter(t => t.length > 0)
       };
 
       const existingIndex = state.recipes.findIndex(r => r.id === id);
