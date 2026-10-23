@@ -206,6 +206,9 @@
           <span id="detail-emoji" class="text-2xl">🍲</span>
         </div>
         <div class="flex items-center gap-2">
+          <button onclick="startCookMode()" class="text-xs bg-brand-500 hover:bg-brand-600 text-white font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 active:scale-95 shadow-sm transition-all">
+            <span>👨‍🍳</span> Kochen
+          </button>
           <button onclick="editCurrentRecipe()" class="text-xs bg-stone-100 text-stone-700 px-3 py-1.5 rounded-lg font-medium">Bearbeiten</button>
           <button onclick="closeModal('detail-modal')" class="text-stone-400 hover:text-stone-600 text-2xl leading-none">&times;</button>
         </div>
@@ -217,6 +220,23 @@
             <span id="detail-time">⏱️ 30 Min</span>
             <span>•</span>
             <span id="detail-tags" class="text-brand-600"></span>
+          </div>
+        </div>
+
+        <!-- Timer Widget im Detail -->
+        <div class="bg-stone-50 border border-stone-200 rounded-xl p-3 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-base">⏱️</span>
+            <div>
+              <div class="text-[10px] text-stone-400 uppercase tracking-wider font-bold">Küchen-Timer</div>
+              <div id="detail-timer-display" class="font-mono text-base font-bold text-stone-800">00:00</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="adjustTimer(60)" class="text-[11px] bg-white border border-stone-200 px-2 py-1 rounded-lg font-semibold text-stone-700 active:scale-95">+1m</button>
+            <button onclick="adjustTimer(300)" class="text-[11px] bg-white border border-stone-200 px-2 py-1 rounded-lg font-semibold text-stone-700 active:scale-95">+5m</button>
+            <button onclick="toggleTimer()" id="btn-timer-toggle" class="text-[11px] bg-brand-600 text-white px-2.5 py-1 rounded-lg font-bold active:scale-95">Start</button>
+            <button onclick="resetTimer()" class="text-[11px] bg-stone-200 text-stone-700 px-2 py-1 rounded-lg font-semibold active:scale-95">✕</button>
           </div>
         </div>
 
@@ -244,6 +264,53 @@
           <h4 class="text-xs font-bold uppercase tracking-wider text-stone-400 mb-3">Zubereitung</h4>
           <div id="detail-steps" class="space-y-3"></div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: KOCHMODUS (VOLLBILD MIT WAKE-LOCK) -->
+  <div id="cook-modal" class="fixed inset-0 z-50 bg-stone-900 text-white hidden flex flex-col">
+    <div class="p-4 border-b border-stone-800 flex items-center justify-between bg-stone-900/90 backdrop-blur-md">
+      <div class="flex items-center gap-2">
+        <span id="cook-emoji" class="text-2xl">👨‍🍳</span>
+        <div>
+          <h3 id="cook-title" class="font-bold text-sm text-stone-100 truncate max-w-[200px]">Rezept</h3>
+          <span class="text-[10px] text-emerald-400 font-medium">● Bildschirm bleibt aktiv</span>
+        </div>
+      </div>
+      <button onclick="stopCookMode()" class="text-xs bg-stone-800 hover:bg-stone-700 text-stone-300 font-bold px-3 py-2 rounded-xl active:scale-95 transition-all">
+        Beenden ✕
+      </button>
+    </div>
+
+    <!-- Timer-Leiste im Kochmodus -->
+    <div class="bg-stone-800/80 px-4 py-2.5 border-b border-stone-700 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-sm">⏱️</span>
+        <span id="cook-timer-display" class="font-mono font-bold text-base text-brand-400">00:00</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <button onclick="adjustTimer(60)" class="text-xs bg-stone-700 text-stone-200 px-2.5 py-1 rounded-lg font-semibold active:scale-95">+1m</button>
+        <button onclick="adjustTimer(300)" class="text-xs bg-stone-700 text-stone-200 px-2.5 py-1 rounded-lg font-semibold active:scale-95">+5m</button>
+        <button onclick="toggleTimer()" id="btn-cook-timer-toggle" class="text-xs bg-brand-600 text-white px-3 py-1 rounded-lg font-bold active:scale-95">Start</button>
+        <button onclick="resetTimer()" class="text-xs bg-stone-700 text-stone-300 px-2 py-1 rounded-lg font-semibold active:scale-95">✕</button>
+      </div>
+    </div>
+
+    <!-- Scrollbereich für Zutaten & Schritte -->
+    <div class="flex-1 overflow-y-auto p-5 space-y-6">
+      <!-- Ausklappbare Zutaten im Kochmodus -->
+      <details class="bg-stone-800/60 rounded-2xl p-4 border border-stone-700">
+        <summary class="font-bold text-sm text-brand-400 cursor-pointer select-none">
+          📋 Zutaten anzeigen (<span id="cook-servings">4</span> Portionen)
+        </summary>
+        <ul id="cook-ingredients-list" class="mt-3 space-y-1.5 text-xs text-stone-300 border-t border-stone-700/60 pt-2.5"></ul>
+      </details>
+
+      <!-- Große nummerierte Schritte -->
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-stone-400 mb-3">Zubereitungsschritte</h4>
+        <div id="cook-steps-list" class="space-y-4"></div>
       </div>
     </div>
   </div>
@@ -377,6 +444,12 @@
     let currentServingsFactor = 1;
     let currentFormImageData = null;
 
+    // --- WAKE-LOCK & TIMER STATE ---
+    let wakeLockSentinel = null;
+    let timerInterval = null;
+    let timerRemainingSeconds = 0;
+    let isTimerRunning = false;
+
     // --- STARTUP ---
     window.addEventListener('DOMContentLoaded', () => {
       try { loadLocalData(); } catch(e) {}
@@ -456,7 +529,7 @@
 
     // --- LOKALE DATEN & DEFAULTS ---
     function loadLocalData() {
-      const stored = localStorage.getItem("heimkueche_data_v10");
+      const stored = localStorage.getItem("heimkueche_data_v11");
       if (stored) {
         try { 
           state = Object.assign(state, JSON.parse(stored)); 
@@ -516,7 +589,7 @@
     }
 
     function saveLocalData() {
-      localStorage.setItem("heimkueche_data_v10", JSON.stringify(state));
+      localStorage.setItem("heimkueche_data_v11", JSON.stringify(state));
     }
 
     function renderAll() {
@@ -766,6 +839,7 @@
       `).join('');
 
       renderIngredientsList();
+      updateTimerDisplay();
       openModal('detail-modal');
     }
 
@@ -1112,15 +1186,12 @@
       const str = name.toLowerCase();
 
       const EMOJI_MAP = [
-        // Haushalt & Drogerie
         { emoji: "🧻", keywords: ["klopapier", "toilettenpapier", "küchenrolle", "taschentücher", "servietten"] },
         { emoji: "🧼", keywords: ["seife", "duschgel", "shampoo", "spülmittel", "waschmittel", "putzmittel"] },
         { emoji: "🪥", keywords: ["zahnpasta", "zahnbürste"] },
         { emoji: "🗑️", keywords: ["müllbeutel", "alufolie", "backpapier", "frischhaltefolie"] },
         { emoji: "☕", keywords: ["kaffee", "espresso", "tee", "kaffeebohnen"] },
         { emoji: "🍺", keywords: ["bier", "wein", "sekt", "cola", "wasser", "saft"] },
-
-        // Gemüse & Kräuter
         { emoji: "🧄", keywords: ["knoblauch", "garlic"] },
         { emoji: "🧅", keywords: ["zwiebel", "schalotte", "lauch", "porree"] },
         { emoji: "🍅", keywords: ["tomate", "passata"] },
@@ -1136,33 +1207,23 @@
         { emoji: "🌿", keywords: ["basilikum", "petersilie", "rosmarin", "thymian", "oregano", "minze", "dill", "koriander", "kräuter"] },
         { emoji: "🌽", keywords: ["mais"] },
         { emoji: "🫛", keywords: ["erbse", "kichererbse", "bohne", "linse"] },
-
-        // Obst
         { emoji: "🍋", keywords: ["zitrone", "limette"] },
         { emoji: "🍎", keywords: ["apfel", "äpfel"] },
         { emoji: "🍌", keywords: ["banane"] },
         { emoji: "🍓", keywords: ["beere", "erdbeere", "himbeere", "blaubeere"] },
         { emoji: "🍊", keywords: ["orange", "clementine", "mandarine"] },
-
-        // Kohlenhydrate
         { emoji: "🍝", keywords: ["nudel", "spaghetti", "penne", "pasta", "tagliatelle", "fusilli"] },
         { emoji: "🍚", keywords: ["reis", "risotto"] },
         { emoji: "🍞", keywords: ["brot", "toast", "baguette", "brötchen"] },
         { emoji: "🌾", keywords: ["mehl", "haferflocken", "couscous", "bulgur", "quinoa"] },
-
-        // Milchprodukte & Eier
         { emoji: "🥛", keywords: ["milch", "sahne", "creme fraiche", "kokosmilch", "schmand"] },
         { emoji: "🧀", keywords: ["käse", "parmesan", "mozzarella", "feta", "gouda", "cheddar", "quark"] },
         { emoji: "🧈", keywords: ["butter", "margarine"] },
         { emoji: "🥚", keywords: ["ei", "eier"] },
-
-        // Fleisch, Fisch & Proteine
         { emoji: "🥩", keywords: ["fleisch", "hackfleisch", "rind", "schwein", "steak", "speck", "bacon"] },
         { emoji: "🍗", keywords: ["hähnchen", "huhn", "geflügel", "pute"] },
         { emoji: "🐟", keywords: ["fisch", "lachs", "thunfisch", "garnele", "garnelen"] },
         { emoji: "🧊", keywords: ["tofu"] },
-
-        // Vorrat, Öle & Gewürze
         { emoji: "🫒", keywords: ["olive", "olivenöl"] },
         { emoji: "🧴", keywords: ["öl", "essig", "senf", "mayo", "sauce", "ketchup", "sojasauce"] },
         { emoji: "🧂", keywords: ["salz", "pfeffer", "gewürz", "curry", "paprikapulver", "brühe"] },
@@ -1354,7 +1415,6 @@
       const inShopping = state.isShoppingMode === true;
 
       if (!inShopping) {
-        // ANSICHT 1: STAGING (Vorgemerkte Rezepte)
         stagingView.classList.remove('hidden');
         shoppingView.classList.add('hidden');
         btnClear.classList.add('hidden');
@@ -1411,7 +1471,6 @@
         }
 
       } else {
-        // ANSICHT 2: SUMMIERTE LISTE (Einkaufsmodus)
         stagingView.classList.add('hidden');
         shoppingView.classList.remove('hidden');
         btnClear.classList.remove('hidden');
@@ -1510,6 +1569,140 @@
       pushToCloud();
       renderGroceries();
       showToast("Erledigte Einträge gelöscht");
+    }
+
+    // --- FEATURE 1: KOCHMODUS MIT WAKE-LOCK ---
+    async function startCookMode() {
+      if (!currentDetailRecipe) return;
+
+      document.getElementById('cook-emoji').innerText = currentDetailRecipe.emoji || '👨‍🍳';
+      document.getElementById('cook-title').innerText = currentDetailRecipe.title;
+      document.getElementById('cook-servings').innerText = Math.round((currentDetailRecipe.servings || 4) * currentServingsFactor);
+
+      // Zutatenliste rendern
+      const ingUl = document.getElementById('cook-ingredients-list');
+      ingUl.innerHTML = "";
+      currentDetailRecipe.ingredients.forEach(ing => {
+        let text = "";
+        if (typeof ing === 'string') text = ing;
+        else {
+          const amt = ing.amount ? (Math.round((ing.amount * currentServingsFactor) * 10) / 10) : "";
+          text = `${amt} ${ing.unit || ''} ${ing.name}`.trim();
+        }
+        ingUl.innerHTML += `<li class="flex items-center gap-2"><span>•</span> <span>${text}</span></li>`;
+      });
+
+      // Große nummerierte Schritte
+      const stepsDiv = document.getElementById('cook-steps-list');
+      const stepsData = Array.isArray(currentDetailRecipe.steps) ? currentDetailRecipe.steps : (currentDetailRecipe.steps || "").split('\n').filter(s => s.trim());
+      stepsDiv.innerHTML = stepsData.map((step, idx) => `
+        <label class="block p-4 rounded-2xl bg-stone-800/80 border border-stone-700/80 active:bg-stone-750 transition-all cursor-pointer">
+          <div class="flex items-start gap-3.5">
+            <input type="checkbox" onchange="this.closest('label').classList.toggle('opacity-40', this.checked)" class="mt-1 rounded border-stone-600 bg-stone-700 text-brand-500 w-5 h-5 focus:ring-0">
+            <div>
+              <span class="text-xs font-bold text-brand-400 block mb-1">SCHRITT ${idx + 1}</span>
+              <p class="text-base text-stone-100 leading-relaxed">${step.replace(/^\d+[\.\)]\s*/, '')}</p>
+            </div>
+          </div>
+        </label>
+      `).join('');
+
+      // Display aktiv halten
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLockSentinel = await navigator.wakeLock.request('screen');
+        }
+      } catch (err) {
+        console.warn("Wake Lock nicht unterstützt oder verweigert:", err);
+      }
+
+      updateTimerDisplay();
+      openModal('cook-modal');
+    }
+
+    function stopCookMode() {
+      if (wakeLockSentinel) {
+        wakeLockSentinel.release().then(() => wakeLockSentinel = null).catch(() => {});
+      }
+      closeModal('cook-modal');
+    }
+
+    // --- FEATURE 3: INTEGRIERTER KÜCHEN-TIMER ---
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    function updateTimerDisplay() {
+      const str = formatTime(timerRemainingSeconds);
+      const d1 = document.getElementById('detail-timer-display');
+      const d2 = document.getElementById('cook-timer-display');
+      if (d1) d1.innerText = str;
+      if (d2) d2.innerText = str;
+
+      const btn1 = document.getElementById('btn-timer-toggle');
+      const btn2 = document.getElementById('btn-cook-timer-toggle');
+      if (btn1) btn1.innerText = isTimerRunning ? "Pause" : "Start";
+      if (btn2) btn2.innerText = isTimerRunning ? "Pause" : "Start";
+    }
+
+    function adjustTimer(seconds) {
+      timerRemainingSeconds += seconds;
+      updateTimerDisplay();
+    }
+
+    function toggleTimer() {
+      if (isTimerRunning) {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        updateTimerDisplay();
+      } else {
+        if (timerRemainingSeconds <= 0) {
+          showToast("Bitte erst Zeit einstellen (+1m / +5m)");
+          return;
+        }
+        isTimerRunning = true;
+        updateTimerDisplay();
+        timerInterval = setInterval(() => {
+          if (timerRemainingSeconds > 0) {
+            timerRemainingSeconds--;
+            updateTimerDisplay();
+          } else {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            updateTimerDisplay();
+            playTimerSound();
+            showToast("⏱️ Timer abgelaufen!");
+          }
+        }, 1000);
+      }
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      isTimerRunning = false;
+      timerRemainingSeconds = 0;
+      updateTimerDisplay();
+    }
+
+    function playTimerSound() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 Ton
+        osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.6);
+        gain.gain.setValueAtTime(1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.6);
+      } catch (e) {
+        console.warn("Audio Context nicht verfügbar:", e);
+      }
     }
 
     // --- MODALS & NOTIFICATIONS ---
