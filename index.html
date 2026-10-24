@@ -35,7 +35,7 @@
 </head>
 <body class="bg-stone-100 text-stone-800 antialiased min-h-screen">
 
-  <!-- PIN-SCHUTZ OVERLAY (SZENARIO A) -->
+  <!-- PIN-SCHUTZ OVERLAY (KRYPTOGRAFISCH GESICHERT) -->
   <div id="pin-overlay" class="fixed inset-0 z-50 bg-stone-900/95 backdrop-blur-md flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl text-center space-y-4">
       <div class="text-4xl">🔒</div>
@@ -43,12 +43,12 @@
         <h2 class="text-lg font-bold text-stone-900">B & F</h2>
         <p class="text-xs text-stone-500 mt-1">Bitte gib eure Haushalts-PIN ein</p>
       </div>
-      <form onsubmit="verifyPin(event)" class="space-y-3">
-        <input type="password" id="pin-input" inputmode="numeric" maxlength="8" placeholder="PIN eingeben" 
+      <form onsubmit="unlockWithPin(event)" class="space-y-3">
+        <input type="password" id="pin-input" inputmode="numeric" maxlength="8" placeholder="PIN eingeben" required
                class="w-full text-center tracking-widest text-xl font-bold bg-stone-50 border border-stone-200 rounded-2xl py-3 focus:outline-none focus:ring-2 focus:ring-brand-500">
-        <p id="pin-error" class="hidden text-xs text-red-500 font-semibold">Falsche PIN. Bitte erneut versuchen.</p>
-        <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold py-3 rounded-2xl shadow-md transition-all text-sm">
-          Entsperren
+        <p id="pin-error" class="hidden text-xs text-red-500 font-semibold">Falsche PIN. Zugriff verweigert.</p>
+        <button type="submit" id="btn-unlock" class="w-full bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold py-3 rounded-2xl shadow-md transition-all text-sm flex items-center justify-center gap-2">
+          <span>Entsperren</span>
         </button>
       </form>
     </div>
@@ -59,7 +59,7 @@
     <div class="max-w-2xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-2">
         <span class="text-2xl">🍲</span>
-        <h1 class="text-lg font-bold tracking-tight text-stone-900">Bella & Franz</h1>
+        <h1 class="text-lg font-bold tracking-tight text-stone-900">B & F</h1>
       </div>
       <div class="flex items-center gap-2">
         <button onclick="manualSync()" id="sync-badge" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-stone-100 text-stone-600 border border-stone-200 active:scale-95 transition-all">
@@ -102,14 +102,13 @@
           <p class="text-xs text-stone-500">Lass dich überraschen oder wähle spontan.</p>
         </div>
 
-        <!-- Filter für den Zufallsgenerator -->
         <div class="bg-stone-50 rounded-xl p-3 border border-stone-200 text-left">
           <div class="flex items-center justify-between mb-2">
             <span class="text-xs font-bold text-stone-700">Erlaubte Kategorien:</span>
             <button type="button" onclick="selectAllRandomCategories(true)" class="text-[10px] text-brand-600 font-semibold hover:underline">Alle wählen</button>
           </div>
           <div id="random-category-filters" class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto"></div>
-          <p class="text-[10px] text-stone-400 mt-2">Tipp: Nimm Häkchen bei „Dessert & Backen“ oder „Snacks“ raus, um reine Hauptgerichte zu erhalten.</p>
+          <p class="text-[10px] text-stone-400 mt-2">Nimm Häkchen bei Backen oder Snacks raus für reine Hauptmahlzeiten.</p>
         </div>
 
         <div id="random-result" class="min-h-[120px] flex items-center justify-center p-4 rounded-xl bg-stone-50 border border-dashed border-stone-300">
@@ -152,7 +151,7 @@
         </div>
       </div>
 
-      <!-- GROSSES, HANDY-FREUNDLICHES EINGABEFELD FÜR MANUELLE ARTIKEL -->
+      <!-- Schnelleingabe -->
       <datalist id="known-ingredients-list"></datalist>
       <form onsubmit="addGroceryManual(event)" class="bg-white p-3.5 rounded-2xl border border-stone-200 shadow-sm space-y-2.5">
         <div class="flex items-center gap-2">
@@ -185,7 +184,7 @@
         </div>
       </form>
 
-      <!-- STUFE 1: Nach Rezepten gruppiert (Prüf-Modus) -->
+      <!-- STUFE 1: Nach Rezepten gruppiert -->
       <div id="staging-view" class="space-y-4">
         <div id="staging-recipes-container" class="space-y-3"></div>
 
@@ -194,7 +193,7 @@
         </button>
       </div>
 
-      <!-- STUFE 2: Kombinierte Liste (Einkaufs-Modus) -->
+      <!-- STUFE 2: Kombinierte Liste -->
       <div id="shopping-view" class="hidden space-y-4">
         <div id="grocery-list" class="space-y-1.5"></div>
       </div>
@@ -267,7 +266,7 @@
           </div>
         </div>
 
-        <!-- Timer Widget im Detail -->
+        <!-- Timer Widget -->
         <div class="bg-stone-50 border border-stone-200 rounded-xl p-3 flex items-center justify-between">
           <div class="flex items-center gap-2">
             <span class="text-base">⏱️</span>
@@ -300,7 +299,6 @@
               <span>🛒</span> In Vorbereitung
             </button>
           </div>
-          <p class="text-[11px] text-stone-400 mb-2">Häkchen abwählen bei Zutaten, die du schon vorrätig hast.</p>
           <ul id="detail-ingredients" class="space-y-1.5 text-sm"></ul>
         </div>
 
@@ -312,7 +310,7 @@
     </div>
   </div>
 
-  <!-- MODAL: KOCHMODUS (VOLLBILD MIT WAKE-LOCK) -->
+  <!-- MODAL: KOCHMODUS -->
   <div id="cook-modal" class="fixed inset-0 z-50 bg-stone-900 text-white hidden flex flex-col">
     <div class="p-4 border-b border-stone-800 flex items-center justify-between bg-stone-900/90 backdrop-blur-md">
       <div class="flex items-center gap-2">
@@ -327,7 +325,6 @@
       </button>
     </div>
 
-    <!-- Timer-Leiste im Kochmodus -->
     <div class="bg-stone-800/80 px-4 py-2.5 border-b border-stone-700 flex items-center justify-between">
       <div class="flex items-center gap-2">
         <span class="text-sm">⏱️</span>
@@ -341,7 +338,6 @@
       </div>
     </div>
 
-    <!-- Scrollbereich für Zutaten & Schritte -->
     <div class="flex-1 overflow-y-auto p-5 space-y-6">
       <details class="bg-stone-800/60 rounded-2xl p-4 border border-stone-700">
         <summary class="font-bold text-sm text-brand-400 cursor-pointer select-none">
@@ -402,7 +398,6 @@
           </div>
         </div>
 
-        <!-- Kategorien -->
         <div>
           <div class="flex items-center justify-between mb-1.5">
             <label class="block text-xs font-bold text-stone-600">Kategorien auswählen</label>
@@ -411,7 +406,6 @@
           <div id="form-category-checkboxes" class="flex flex-wrap gap-1.5 p-2 bg-stone-50 rounded-xl border border-stone-200 max-h-32 overflow-y-auto"></div>
         </div>
 
-        <!-- Strukturierte Zutatenzeilen -->
         <div>
           <div class="flex items-center justify-between mb-1.5">
             <label class="block text-xs font-bold text-stone-600">Zutaten</label>
@@ -423,7 +417,6 @@
           </button>
         </div>
 
-        <!-- Dynamische Zubereitungsschritte -->
         <div>
           <div class="flex items-center justify-between mb-1.5">
             <label class="block text-xs font-bold text-stone-600">Zubereitungsschritte</label>
@@ -445,15 +438,16 @@
 
   <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-stone-900 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg transition-all opacity-0 pointer-events-none"></div>
 
-  <!-- JAVASCRIPT LOGIK -->
+  <!-- JAVASCRIPT LOGIK MIT KRYPTO-SCHUTZ -->
   <script>
-    // ==========================================
-    // ⚙️ HIER DEINE JSONBIN-DATEN & HAUSHALTS-PIN EINTRAGEN:
-    // ==========================================
+    // ========================================================
+    // ⚙️ HIER DEINE BIN-ID & VERSCHLÜSSELTEN KEY EINTRAGEN:
+    // ========================================================
     const JSONBIN_ID = "6adb8714ffd5d160538623fd";
-    const JSONBIN_KEY = "$2a$10$y6kyGrnoX1xkRVsn1h44puSeCqiClneLZpxA.4P4JsubFVZ3o8q8i";
-    const HOUSEHOLD_PIN = "1234"; // Hier eure gewünschte gemeinsame Haushalts-PIN festlegen!
+    const ENCRYPTED_KEY_PAYLOAD = "eyJzYWx0IjpbMTY5LDExLDIxOCw5Myw3MCwxMzcsNzYsODMsNCwxMTMsMjI0LDI0NCwxNjcsNTgsMjEwLDMyXSwiaXYiOlsxNDEsMTY0LDIzNiwzOSwxMzIsMjA0LDEzNywyMzUsMTUwLDEyMiwxNDksMV0sImRhdGEiOlsxMjksNiwxMDAsMTMwLDQwLDEzNCw5NSwxNDMsNTQsOCw0MCw5MCwxMDUsMTAyLDM0LDI0MywyNTQsMTQ3LDIxNCwyNDUsMjI3LDE0MywyNTMsMTk1LDk5LDE2MCwxMzksMzEsNDIsMTI1LDgzLDEyMiw5NywyNTIsMTkxLDI5LDE1OCw1NywyMjIsMTUyLDgyLDIzLDE2MiwxMDgsNDEsMTQ0LDE3NSw2MSw2OSwxNzAsMjUxLDE0MywzMSwyNTIsMTI5LDE4MywyMDksMTA2LDIyNywxNzcsMTAwLDI2LDIxLDY1LDEyNiwzMywxOTgsMjM0LDIzMywyMTIsNTMsMTIxLDE5Myw5LDEzMiwzMV19";
     const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
+
+    let activeDecryptedKey = null; // Liegt nur flüchtig im Arbeitsspeicher!
 
     const DAYS = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
 
@@ -479,7 +473,7 @@
       manualGroceries: [],
       groceries: [],
       isShoppingMode: false,
-      allowedRandomCategories: [] // Neu: Ausgewählte Kategorien für Zufallsgenerator
+      allowedRandomCategories: []
     };
 
     let activeFilter = 'all';
@@ -487,49 +481,50 @@
     let currentServingsFactor = 1;
     let currentFormImageData = null;
 
-    // --- WAKE-LOCK & TIMER STATE ---
     let wakeLockSentinel = null;
     let timerInterval = null;
     let timerRemainingSeconds = 0;
     let isTimerRunning = false;
 
-    // --- STARTUP & PIN-PRÜFUNG ---
-    window.addEventListener('DOMContentLoaded', () => {
-      checkPinAuth();
-      try { loadLocalData(); } catch(e) {}
-      renderAll();
-
-      if (JSONBIN_ID && JSONBIN_ID !== "DEINE_BIN_ID_HIER" && JSONBIN_KEY && JSONBIN_KEY !== "DEIN_ACCESS_KEY_HIER") {
-        updateSyncBadge("loading", "Verbinde...");
-        pullFromCloud();
-        setInterval(pullFromCloud, 30000);
-      } else {
-        updateSyncBadge("offline", "Nur Lokal");
+    // --- KRYPTOGRAFISCHE ENTSCHLÜSSELUNG PER PIN ---
+    async function decryptKeyWithPin(pin) {
+      if (!ENCRYPTED_KEY_PAYLOAD || ENCRYPTED_KEY_PAYLOAD === "DEIN_VERSCHLUESSELTER_STRING_AUS_SCHRITT_1") {
+        throw new Error("Kein verschlüsselter Key hinterlegt.");
       }
-    });
+      const raw = JSON.parse(atob(ENCRYPTED_KEY_PAYLOAD));
+      const salt = new Uint8Array(raw.salt);
+      const iv = new Uint8Array(raw.iv);
+      const data = new Uint8Array(raw.data);
 
-    function checkPinAuth() {
-      const isAuth = localStorage.getItem("heimkueche_auth_pin");
-      const overlay = document.getElementById('pin-overlay');
-      if (isAuth === HOUSEHOLD_PIN) {
-        overlay.classList.add('hidden');
-      } else {
-        overlay.classList.remove('hidden');
-        setTimeout(() => document.getElementById('pin-input').focus(), 100);
-      }
+      const enc = new TextEncoder();
+      const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(pin), "PBKDF2", false, ["deriveKey"]);
+      const key = await crypto.subtle.deriveKey(
+        { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["decrypt"]
+      );
+
+      const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+      return new TextDecoder().decode(decrypted);
     }
 
-    function verifyPin(e) {
+    async function unlockWithPin(e) {
       e.preventDefault();
       const input = document.getElementById('pin-input');
       const err = document.getElementById('pin-error');
-      if (input.value.trim() === HOUSEHOLD_PIN) {
-        localStorage.setItem("heimkueche_auth_pin", HOUSEHOLD_PIN);
+      const pin = input.value.trim();
+
+      try {
+        activeDecryptedKey = await decryptKeyWithPin(pin);
+        localStorage.setItem("bf_stored_pin", pin);
         document.getElementById('pin-overlay').classList.add('hidden');
         err.classList.add('hidden');
         input.value = "";
         showToast("Erfolgreich entsperrt!");
-      } else {
+        pullFromCloud();
+      } catch (ex) {
         err.classList.remove('hidden');
         input.value = "";
         input.focus();
@@ -537,17 +532,40 @@
     }
 
     function lockApp() {
-      localStorage.removeItem("heimkueche_auth_pin");
-      checkPinAuth();
+      activeDecryptedKey = null;
+      localStorage.removeItem("bf_stored_pin");
+      document.getElementById('pin-overlay').classList.remove('hidden');
+      updateSyncBadge("offline", "Gesperrt");
       showToast("App gesperrt.");
     }
 
-    // --- SYNC ENGINE MIT X-ACCESS-KEY ---
+    // --- STARTUP ---
+    window.addEventListener('DOMContentLoaded', async () => {
+      try { loadLocalData(); } catch(e) {}
+      renderAll();
+
+      const savedPin = localStorage.getItem("bf_stored_pin");
+      if (savedPin) {
+        try {
+          activeDecryptedKey = await decryptKeyWithPin(savedPin);
+          document.getElementById('pin-overlay').classList.add('hidden');
+          pullFromCloud();
+          setInterval(pullFromCloud, 30000);
+          return;
+        } catch (e) {
+          localStorage.removeItem("bf_stored_pin");
+        }
+      }
+      document.getElementById('pin-overlay').classList.remove('hidden');
+      setTimeout(() => document.getElementById('pin-input').focus(), 150);
+    });
+
+    // --- SYNC ENGINE ---
     async function pullFromCloud() {
-      if (!JSONBIN_ID || JSONBIN_ID === "DEINE_BIN_ID_HIER" || !JSONBIN_KEY || JSONBIN_KEY === "DEIN_ACCESS_KEY_HIER") return;
+      if (!activeDecryptedKey || !JSONBIN_ID || JSONBIN_ID === "DEINE_BIN_ID_HIER") return;
       try {
         const res = await fetch(`${JSONBIN_URL}/latest`, {
-          headers: { "X-Access-Key": JSONBIN_KEY }
+          headers: { "X-Access-Key": activeDecryptedKey }
         });
         if (!res.ok) throw new Error("Status " + res.status);
         const data = await res.json();
@@ -576,7 +594,7 @@
 
     async function pushToCloud() {
       saveLocalData();
-      if (!JSONBIN_ID || JSONBIN_ID === "DEINE_BIN_ID_HIER" || !JSONBIN_KEY || JSONBIN_KEY === "DEIN_ACCESS_KEY_HIER") return;
+      if (!activeDecryptedKey || !JSONBIN_ID || JSONBIN_ID === "DEINE_BIN_ID_HIER") return;
 
       updateSyncBadge("loading", "Speichere...");
       try {
@@ -584,7 +602,7 @@
           method: "PUT",
           headers: { 
             "Content-Type": "application/json", 
-            "X-Access-Key": JSONBIN_KEY 
+            "X-Access-Key": activeDecryptedKey 
           },
           body: JSON.stringify(state)
         });
@@ -595,6 +613,10 @@
     }
 
     function manualSync() {
+      if (!activeDecryptedKey) {
+        showToast("Bitte erst entsperren!");
+        return;
+      }
       showToast("Synchronisiere...");
       pullFromCloud();
     }
@@ -608,7 +630,7 @@
 
     // --- LOKALE DATEN & DEFAULTS ---
     function loadLocalData() {
-      const stored = localStorage.getItem("heimkueche_data_v12");
+      const stored = localStorage.getItem("heimkueche_data_v14");
       if (stored) {
         try { 
           state = Object.assign(state, JSON.parse(stored)); 
@@ -684,13 +706,12 @@
       state.manualGroceries = [];
       state.groceries = [];
       state.isShoppingMode = false;
-      // Standard: Hauptspeisen vorausgewählt, Desserts nicht
       state.allowedRandomCategories = ["Vegetarisch", "Unter 30 Min", "Pasta", "Fleisch", "Suppe"];
       saveLocalData();
     }
 
     function saveLocalData() {
-      localStorage.setItem("heimkueche_data_v12", JSON.stringify(state));
+      localStorage.setItem("heimkueche_data_v14", JSON.stringify(state));
     }
 
     function renderAll() {
@@ -806,7 +827,7 @@
       });
     }
 
-    // --- ZUFALLS-FILTER RENDERN & VERWALTEN ---
+    // --- ZUFALLS-FILTER ---
     function renderRandomCategoryFilters() {
       const container = document.getElementById('random-category-filters');
       if (!container) return;
@@ -845,7 +866,7 @@
       renderRandomCategoryFilters();
     }
 
-    // --- ZUTATEN- & SCHRITTZEILEN IM FORMULAR ---
+    // --- FORMULAR ZEILEN ---
     function addIngredientRow(amount = "", unit = "", name = "") {
       const container = document.getElementById('form-ingredients-rows');
       const rowIndex = container.children.length;
@@ -1204,18 +1225,14 @@
       if (state.recipes.length === 0) return;
 
       const allowedCats = (state.allowedRandomCategories || []).map(c => c.toLowerCase());
-
-      // Filtert Rezepte nach den erlaubten Kategorien
       const eligibleRecipes = state.recipes.filter(r => {
         if (!r.tags || r.tags.length === 0) return true;
-        // Mindestens eine Kategorie des Rezepts muss in den erlaubten Kategorien sein
         return r.tags.some(t => allowedCats.includes(t.toLowerCase()));
       });
 
       const resDiv = document.getElementById('random-result');
-
       if (eligibleRecipes.length === 0) {
-        resDiv.innerHTML = `<p class="text-amber-600 text-xs font-semibold p-2">Kein Rezept passt zu den ausgewählten Kategorien. Bitte wähle oben mehr Kategorien aus.</p>`;
+        resDiv.innerHTML = `<p class="text-amber-600 text-xs font-semibold p-2">Kein Rezept passt zu den ausgewählten Kategorien.</p>`;
         return;
       }
 
@@ -1323,7 +1340,7 @@
       showToast("Aktive Tage geplant!");
     }
 
-    // --- ÄHNLICHKEITSPRÜFUNG FÜR TIPPFEHLER (FUZZY MATCHING) ---
+    // --- ÄHNLICHKEITSPRÜFUNG (FUZZY MATCHING) ---
     function areSimilarWords(a, b) {
       a = a.trim().toLowerCase();
       b = b.trim().toLowerCase();
@@ -1350,7 +1367,7 @@
       return distance <= maxDistance;
     }
 
-    // --- ZUTATEN- & HAUSHALTS-EMOJI EINTEILUNG ---
+    // --- ZUTATEN-EMOJIS ---
     function getIngredientEmoji(name) {
       if (!name) return "🛒";
       const str = name.toLowerCase();
@@ -1408,7 +1425,7 @@
       return "🛒";
     }
 
-    // --- EINKAUFSLISTE LOGIK (2-STUFIG & STABIL) ---
+    // --- EINKAUFSLISTE ---
     function addIngredientToGroceryList(amount, unit, name) {
       const cleanName = name.trim().toLowerCase();
       const cleanUnit = (unit || "").trim().toLowerCase();
@@ -1741,7 +1758,7 @@
       showToast("Erledigte Einträge gelöscht");
     }
 
-    // --- KOCHMODUS MIT WAKE-LOCK ---
+    // --- KOCHMODUS ---
     async function startCookMode() {
       if (!currentDetailRecipe) return;
 
