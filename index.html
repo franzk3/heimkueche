@@ -25,7 +25,7 @@
   </script>
   <style>
     body { -webkit-tap-highlight-color: transparent; }
-    .safe-bottom { padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px)); }
+    .safe-bottom { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); }
     .nav-safe { padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px)); }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
@@ -35,17 +35,41 @@
 </head>
 <body class="bg-stone-100 text-stone-800 antialiased min-h-screen">
 
+  <!-- PIN-SCHUTZ OVERLAY (SZENARIO A) -->
+  <div id="pin-overlay" class="fixed inset-0 z-50 bg-stone-900/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl text-center space-y-4">
+      <div class="text-4xl">🔒</div>
+      <div>
+        <h2 class="text-lg font-bold text-stone-900">B & F</h2>
+        <p class="text-xs text-stone-500 mt-1">Bitte gib eure Haushalts-PIN ein</p>
+      </div>
+      <form onsubmit="verifyPin(event)" class="space-y-3">
+        <input type="password" id="pin-input" inputmode="numeric" maxlength="8" placeholder="PIN eingeben" 
+               class="w-full text-center tracking-widest text-xl font-bold bg-stone-50 border border-stone-200 rounded-2xl py-3 focus:outline-none focus:ring-2 focus:ring-brand-500">
+        <p id="pin-error" class="hidden text-xs text-red-500 font-semibold">Falsche PIN. Bitte erneut versuchen.</p>
+        <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold py-3 rounded-2xl shadow-md transition-all text-sm">
+          Entsperren
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- Header -->
   <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-stone-200 px-4 py-3">
     <div class="max-w-2xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-2">
         <span class="text-2xl">🍲</span>
-        <h1 class="text-lg font-bold tracking-tight text-stone-900">B & F</h1>
+        <h1 class="text-lg font-bold tracking-tight text-stone-900">Bella & Franz</h1>
       </div>
-      <button onclick="manualSync()" id="sync-badge" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-stone-100 text-stone-600 border border-stone-200 active:scale-95 transition-all">
-        <span id="sync-dot" class="w-2 h-2 rounded-full bg-stone-400"></span>
-        <span id="sync-text">Lokal</span>
-      </button>
+      <div class="flex items-center gap-2">
+        <button onclick="manualSync()" id="sync-badge" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-stone-100 text-stone-600 border border-stone-200 active:scale-95 transition-all">
+          <span id="sync-dot" class="w-2 h-2 rounded-full bg-stone-400"></span>
+          <span id="sync-text">Lokal</span>
+        </button>
+        <button onclick="lockApp()" title="App sperren" class="p-1.5 text-stone-400 hover:text-stone-700 rounded-lg text-sm">
+          🔒
+        </button>
+      </div>
     </div>
   </header>
 
@@ -71,12 +95,24 @@
 
     <!-- TAB 2: INSPIRATION / ZUFALL -->
     <section id="tab-inspire" class="tab-content space-y-4">
-      <div class="bg-white border border-stone-200 rounded-2xl p-6 text-center shadow-sm">
-        <div class="text-4xl mb-2">🎲</div>
-        <h2 class="text-lg font-bold text-stone-900">Was kochen wir heute?</h2>
-        <p class="text-xs text-stone-500 mb-6">Lass dich überraschen oder wähle spontan.</p>
+      <div class="bg-white border border-stone-200 rounded-2xl p-5 text-center shadow-sm space-y-4">
+        <div class="text-4xl">🎲</div>
+        <div>
+          <h2 class="text-lg font-bold text-stone-900">Was kochen wir heute?</h2>
+          <p class="text-xs text-stone-500">Lass dich überraschen oder wähle spontan.</p>
+        </div>
 
-        <div id="random-result" class="min-h-[140px] flex items-center justify-center p-4 rounded-xl bg-stone-50 border border-dashed border-stone-300 mb-6">
+        <!-- Filter für den Zufallsgenerator -->
+        <div class="bg-stone-50 rounded-xl p-3 border border-stone-200 text-left">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold text-stone-700">Erlaubte Kategorien:</span>
+            <button type="button" onclick="selectAllRandomCategories(true)" class="text-[10px] text-brand-600 font-semibold hover:underline">Alle wählen</button>
+          </div>
+          <div id="random-category-filters" class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto"></div>
+          <p class="text-[10px] text-stone-400 mt-2">Tipp: Nimm Häkchen bei „Dessert & Backen“ oder „Snacks“ raus, um reine Hauptgerichte zu erhalten.</p>
+        </div>
+
+        <div id="random-result" class="min-h-[120px] flex items-center justify-center p-4 rounded-xl bg-stone-50 border border-dashed border-stone-300">
           <p class="text-stone-400 text-sm">Tippe auf den Button für einen Vorschlag</p>
         </div>
 
@@ -116,29 +152,37 @@
         </div>
       </div>
 
-      <!-- Schnelleingabe für manuelle Artikel (dauerhaft sichtbar) -->
+      <!-- GROSSES, HANDY-FREUNDLICHES EINGABEFELD FÜR MANUELLE ARTIKEL -->
       <datalist id="known-ingredients-list"></datalist>
-      <form onsubmit="addGroceryManual(event)" class="grid grid-cols-12 gap-2 bg-white p-2.5 rounded-xl border border-stone-200 shadow-sm">
-        <input type="number" step="any" id="grocery-amount-input" placeholder="Menge" class="col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none">
-        <select id="grocery-unit-input" class="col-span-3 bg-stone-50 border border-stone-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none text-stone-700">
-          <option value="">(keine)</option>
-          <option value="g">g</option>
-          <option value="kg">kg</option>
-          <option value="ml">ml</option>
-          <option value="l">l</option>
-          <option value="TL">TL</option>
-          <option value="EL">EL</option>
-          <option value="Prise">Prise</option>
-          <option value="Stk">Stk</option>
-          <option value="Zehe(n)">Zehe(n)</option>
-          <option value="Dose(n)">Dose(n)</option>
-          <option value="Bund">Bund</option>
-          <option value="Pkg">Pkg</option>
-          <option value="Rolle(n)">Rolle(n)</option>
-          <option value="Flasche(n)">Flasche(n)</option>
-        </select>
-        <input type="text" list="known-ingredients-list" id="grocery-name-input" placeholder="Artikel / Haushalt..." required class="col-span-5 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none">
-        <button type="submit" class="col-span-1 bg-brand-600 text-white font-bold rounded-lg text-sm flex items-center justify-center active:scale-95">+</button>
+      <form onsubmit="addGroceryManual(event)" class="bg-white p-3.5 rounded-2xl border border-stone-200 shadow-sm space-y-2.5">
+        <div class="flex items-center gap-2">
+          <input type="text" list="known-ingredients-list" id="grocery-name-input" placeholder="Artikel / Haushalt (z. B. Klopapier, Milch)..." required 
+                 class="flex-1 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40">
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="number" step="any" id="grocery-amount-input" placeholder="Menge" 
+                 class="w-24 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40">
+          <select id="grocery-unit-input" class="w-28 bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-2.5 text-sm focus:outline-none text-stone-700">
+            <option value="">(keine)</option>
+            <option value="g">g</option>
+            <option value="kg">kg</option>
+            <option value="ml">ml</option>
+            <option value="l">l</option>
+            <option value="TL">TL</option>
+            <option value="EL">EL</option>
+            <option value="Prise">Prise</option>
+            <option value="Stk">Stk</option>
+            <option value="Zehe(n)">Zehe(n)</option>
+            <option value="Dose(n)">Dose(n)</option>
+            <option value="Bund">Bund</option>
+            <option value="Pkg">Pkg</option>
+            <option value="Rolle(n)">Rolle(n)</option>
+            <option value="Flasche(n)">Flasche(n)</option>
+          </select>
+          <button type="submit" class="flex-1 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold py-2.5 px-4 rounded-xl text-sm shadow-sm transition-all flex items-center justify-center gap-1.5">
+            <span class="text-lg leading-none">+</span> Hinzufügen
+          </button>
+        </div>
       </form>
 
       <!-- STUFE 1: Nach Rezepten gruppiert (Prüf-Modus) -->
@@ -299,7 +343,6 @@
 
     <!-- Scrollbereich für Zutaten & Schritte -->
     <div class="flex-1 overflow-y-auto p-5 space-y-6">
-      <!-- Ausklappbare Zutaten im Kochmodus -->
       <details class="bg-stone-800/60 rounded-2xl p-4 border border-stone-700">
         <summary class="font-bold text-sm text-brand-400 cursor-pointer select-none">
           📋 Zutaten anzeigen (<span id="cook-servings">4</span> Portionen)
@@ -307,7 +350,6 @@
         <ul id="cook-ingredients-list" class="mt-3 space-y-1.5 text-xs text-stone-300 border-t border-stone-700/60 pt-2.5"></ul>
       </details>
 
-      <!-- Große nummerierte Schritte -->
       <div>
         <h4 class="text-xs font-bold uppercase tracking-wider text-stone-400 mb-3">Zubereitungsschritte</h4>
         <div id="cook-steps-list" class="space-y-4"></div>
@@ -325,7 +367,6 @@
       <form onsubmit="saveRecipeForm(event)" class="p-6 overflow-y-auto space-y-4">
         <input type="hidden" id="form-id">
 
-        <!-- Foto-Upload mit Vorschau -->
         <div>
           <label class="block text-xs font-bold text-stone-600 mb-1">Foto (optional)</label>
           <div class="flex items-center gap-3">
@@ -407,10 +448,11 @@
   <!-- JAVASCRIPT LOGIK -->
   <script>
     // ==========================================
-    // ⚙️ HIER DEINE JSONBIN-DATEN EINTRAGEN:
+    // ⚙️ HIER DEINE JSONBIN-DATEN & HAUSHALTS-PIN EINTRAGEN:
     // ==========================================
     const JSONBIN_ID = "6adb8714ffd5d160538623fd";
     const JSONBIN_KEY = "$2a$10$y6kyGrnoX1xkRVsn1h44puSeCqiClneLZpxA.4P4JsubFVZ3o8q8i";
+    const HOUSEHOLD_PIN = "1234"; // Hier eure gewünschte gemeinsame Haushalts-PIN festlegen!
     const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
 
     const DAYS = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
@@ -429,14 +471,15 @@
     ];
 
     let state = {
-      categories: ["Vegetarisch", "Unter 30 Min", "Pasta", "Fleisch", "Suppe"],
+      categories: ["Vegetarisch", "Unter 30 Min", "Pasta", "Fleisch", "Suppe", "Dessert & Backen", "Snack"],
       recipes: [],
       plan: {},
       excludedDays: [],
       stagingRecipes: [],
       manualGroceries: [],
       groceries: [],
-      isShoppingMode: false
+      isShoppingMode: false,
+      allowedRandomCategories: [] // Neu: Ausgewählte Kategorien für Zufallsgenerator
     };
 
     let activeFilter = 'all';
@@ -450,8 +493,9 @@
     let timerRemainingSeconds = 0;
     let isTimerRunning = false;
 
-    // --- STARTUP ---
+    // --- STARTUP & PIN-PRÜFUNG ---
     window.addEventListener('DOMContentLoaded', () => {
+      checkPinAuth();
       try { loadLocalData(); } catch(e) {}
       renderAll();
 
@@ -463,6 +507,40 @@
         updateSyncBadge("offline", "Nur Lokal");
       }
     });
+
+    function checkPinAuth() {
+      const isAuth = localStorage.getItem("heimkueche_auth_pin");
+      const overlay = document.getElementById('pin-overlay');
+      if (isAuth === HOUSEHOLD_PIN) {
+        overlay.classList.add('hidden');
+      } else {
+        overlay.classList.remove('hidden');
+        setTimeout(() => document.getElementById('pin-input').focus(), 100);
+      }
+    }
+
+    function verifyPin(e) {
+      e.preventDefault();
+      const input = document.getElementById('pin-input');
+      const err = document.getElementById('pin-error');
+      if (input.value.trim() === HOUSEHOLD_PIN) {
+        localStorage.setItem("heimkueche_auth_pin", HOUSEHOLD_PIN);
+        document.getElementById('pin-overlay').classList.add('hidden');
+        err.classList.add('hidden');
+        input.value = "";
+        showToast("Erfolgreich entsperrt!");
+      } else {
+        err.classList.remove('hidden');
+        input.value = "";
+        input.focus();
+      }
+    }
+
+    function lockApp() {
+      localStorage.removeItem("heimkueche_auth_pin");
+      checkPinAuth();
+      showToast("App gesperrt.");
+    }
 
     // --- SYNC ENGINE MIT X-ACCESS-KEY ---
     async function pullFromCloud() {
@@ -483,6 +561,7 @@
           if (Array.isArray(data.record.manualGroceries)) state.manualGroceries = data.record.manualGroceries;
           if (Array.isArray(data.record.groceries)) state.groceries = data.record.groceries;
           if (typeof data.record.isShoppingMode === 'boolean') state.isShoppingMode = data.record.isShoppingMode;
+          if (Array.isArray(data.record.allowedRandomCategories)) state.allowedRandomCategories = data.record.allowedRandomCategories;
 
           saveLocalData();
           renderAll();
@@ -529,7 +608,7 @@
 
     // --- LOKALE DATEN & DEFAULTS ---
     function loadLocalData() {
-      const stored = localStorage.getItem("heimkueche_data_v11");
+      const stored = localStorage.getItem("heimkueche_data_v12");
       if (stored) {
         try { 
           state = Object.assign(state, JSON.parse(stored)); 
@@ -577,6 +656,26 @@
             "Knoblauch anbraten, Kokosmilch, Currypulver und abgetropfte Kichererbsen zugeben.",
             "Etwa 10 Minuten cremig einköcheln lassen und mit Reis anrichten."
           ]
+        },
+        {
+          id: "3",
+          title: "Saftige Zimtschnecken",
+          emoji: "🥮",
+          time: 45,
+          servings: 8,
+          tags: ["Dessert & Backen", "Snack"],
+          ingredients: [
+            { amount: 500, unit: "g", name: "Mehl" },
+            { amount: 1, unit: "Pkg", name: "Trockenhefe" },
+            { amount: 250, unit: "ml", name: "Milch" },
+            { amount: 75, unit: "g", name: "Butter" },
+            { amount: 2, unit: "EL", name: "Zimt" }
+          ],
+          steps: [
+            "Hefeteig kneten und ca. 30 Minuten an einem warmen Ort gehen lassen.",
+            "Teig ausrollen, mit geschmolzener Butter bestreichen und mit Zimt-Zucker bestreuen.",
+            "Einrollen, in Stücke schneiden und bei 180°C etwa 20 Minuten backen."
+          ]
         }
       ];
       state.plan = { "Montag": "1", "Dienstag": "2" };
@@ -585,11 +684,13 @@
       state.manualGroceries = [];
       state.groceries = [];
       state.isShoppingMode = false;
+      // Standard: Hauptspeisen vorausgewählt, Desserts nicht
+      state.allowedRandomCategories = ["Vegetarisch", "Unter 30 Min", "Pasta", "Fleisch", "Suppe"];
       saveLocalData();
     }
 
     function saveLocalData() {
-      localStorage.setItem("heimkueche_data_v11", JSON.stringify(state));
+      localStorage.setItem("heimkueche_data_v12", JSON.stringify(state));
     }
 
     function renderAll() {
@@ -597,6 +698,7 @@
       renderRecipes();
       renderPlan();
       renderGroceries();
+      renderRandomCategoryFilters();
       updateIngredientsDatalist();
     }
 
@@ -666,15 +768,20 @@
         pushToCloud();
         openCategoryModal();
         renderCategoryFilters();
+        renderRandomCategoryFilters();
         showToast("Kategorie hinzugefügt");
       }
     }
 
     function deleteCategory(idx) {
-      state.categories.splice(idx, 1);
+      const removed = state.categories.splice(idx, 1)[0];
+      if (state.allowedRandomCategories) {
+        state.allowedRandomCategories = state.allowedRandomCategories.filter(c => c !== removed);
+      }
       pushToCloud();
       openCategoryModal();
       renderCategoryFilters();
+      renderRandomCategoryFilters();
       renderRecipes();
     }
 
@@ -697,6 +804,45 @@
         });
         container.appendChild(label);
       });
+    }
+
+    // --- ZUFALLS-FILTER RENDERN & VERWALTEN ---
+    function renderRandomCategoryFilters() {
+      const container = document.getElementById('random-category-filters');
+      if (!container) return;
+      container.innerHTML = "";
+
+      if (!state.allowedRandomCategories) {
+        state.allowedRandomCategories = state.categories.filter(c => !["dessert & backen", "snack", "süßes", "kuchen"].includes(c.toLowerCase()));
+      }
+
+      state.categories.forEach(cat => {
+        const isChecked = state.allowedRandomCategories.includes(cat);
+        const label = document.createElement('label');
+        label.className = `flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs cursor-pointer select-none transition-all ${isChecked ? 'bg-brand-50 border-brand-300 text-brand-700 font-semibold' : 'bg-white border-stone-200 text-stone-500'}`;
+        label.innerHTML = `
+          <input type="checkbox" value="${cat}" ${isChecked ? 'checked' : ''} onchange="toggleRandomCategory('${cat}', this.checked)" class="rounded text-brand-600 focus:ring-0 w-3.5 h-3.5">
+          <span>${cat}</span>
+        `;
+        container.appendChild(label);
+      });
+    }
+
+    function toggleRandomCategory(cat, checked) {
+      if (!state.allowedRandomCategories) state.allowedRandomCategories = [];
+      if (checked) {
+        if (!state.allowedRandomCategories.includes(cat)) state.allowedRandomCategories.push(cat);
+      } else {
+        state.allowedRandomCategories = state.allowedRandomCategories.filter(c => c !== cat);
+      }
+      pushToCloud();
+      renderRandomCategoryFilters();
+    }
+
+    function selectAllRandomCategories(select) {
+      state.allowedRandomCategories = select ? [...state.categories] : [];
+      pushToCloud();
+      renderRandomCategoryFilters();
     }
 
     // --- ZUTATEN- & SCHRITTZEILEN IM FORMULAR ---
@@ -1053,14 +1199,30 @@
       showToast("Rezept gelöscht");
     }
 
-    // --- ZUFALLSGERICHT ---
+    // --- ZUFALLSGERICHT MIT KATEGORIE-FILTER ---
     function rollRandomRecipe() {
       if (state.recipes.length === 0) return;
+
+      const allowedCats = (state.allowedRandomCategories || []).map(c => c.toLowerCase());
+
+      // Filtert Rezepte nach den erlaubten Kategorien
+      const eligibleRecipes = state.recipes.filter(r => {
+        if (!r.tags || r.tags.length === 0) return true;
+        // Mindestens eine Kategorie des Rezepts muss in den erlaubten Kategorien sein
+        return r.tags.some(t => allowedCats.includes(t.toLowerCase()));
+      });
+
       const resDiv = document.getElementById('random-result');
+
+      if (eligibleRecipes.length === 0) {
+        resDiv.innerHTML = `<p class="text-amber-600 text-xs font-semibold p-2">Kein Rezept passt zu den ausgewählten Kategorien. Bitte wähle oben mehr Kategorien aus.</p>`;
+        return;
+      }
+
       resDiv.innerHTML = `<span class="animate-spin text-2xl">🎲</span>`;
       
       setTimeout(() => {
-        const rand = state.recipes[Math.floor(Math.random() * state.recipes.length)];
+        const rand = eligibleRecipes[Math.floor(Math.random() * eligibleRecipes.length)];
         resDiv.innerHTML = `
           <div class="text-left w-full cursor-pointer" onclick="openDetailModal('${rand.id}')">
             <div class="flex items-center gap-2 mb-1">
@@ -1142,9 +1304,17 @@
 
     function autoPlanWeek() {
       if (state.recipes.length === 0) return;
+      const allowedCats = (state.allowedRandomCategories || []).map(c => c.toLowerCase());
+      const eligibleRecipes = state.recipes.filter(r => {
+        if (!r.tags || r.tags.length === 0) return true;
+        return r.tags.some(t => allowedCats.includes(t.toLowerCase()));
+      });
+
+      const pool = eligibleRecipes.length > 0 ? eligibleRecipes : state.recipes;
+
       DAYS.forEach(day => {
         if (!state.excludedDays.includes(day)) {
-          const rand = state.recipes[Math.floor(Math.random() * state.recipes.length)];
+          const rand = pool[Math.floor(Math.random() * pool.length)];
           state.plan[day] = rand.id;
         }
       });
@@ -1571,7 +1741,7 @@
       showToast("Erledigte Einträge gelöscht");
     }
 
-    // --- FEATURE 1: KOCHMODUS MIT WAKE-LOCK ---
+    // --- KOCHMODUS MIT WAKE-LOCK ---
     async function startCookMode() {
       if (!currentDetailRecipe) return;
 
@@ -1579,7 +1749,6 @@
       document.getElementById('cook-title').innerText = currentDetailRecipe.title;
       document.getElementById('cook-servings').innerText = Math.round((currentDetailRecipe.servings || 4) * currentServingsFactor);
 
-      // Zutatenliste rendern
       const ingUl = document.getElementById('cook-ingredients-list');
       ingUl.innerHTML = "";
       currentDetailRecipe.ingredients.forEach(ing => {
@@ -1592,7 +1761,6 @@
         ingUl.innerHTML += `<li class="flex items-center gap-2"><span>•</span> <span>${text}</span></li>`;
       });
 
-      // Große nummerierte Schritte
       const stepsDiv = document.getElementById('cook-steps-list');
       const stepsData = Array.isArray(currentDetailRecipe.steps) ? currentDetailRecipe.steps : (currentDetailRecipe.steps || "").split('\n').filter(s => s.trim());
       stepsDiv.innerHTML = stepsData.map((step, idx) => `
@@ -1607,13 +1775,12 @@
         </label>
       `).join('');
 
-      // Display aktiv halten
       try {
         if ('wakeLock' in navigator) {
           wakeLockSentinel = await navigator.wakeLock.request('screen');
         }
       } catch (err) {
-        console.warn("Wake Lock nicht unterstützt oder verweigert:", err);
+        console.warn("Wake Lock nicht unterstützt:", err);
       }
 
       updateTimerDisplay();
@@ -1627,7 +1794,7 @@
       closeModal('cook-modal');
     }
 
-    // --- FEATURE 3: INTEGRIERTER KÜCHEN-TIMER ---
+    // --- KÜCHEN-TIMER ---
     function formatTime(sec) {
       const m = Math.floor(sec / 60);
       const s = sec % 60;
@@ -1692,7 +1859,7 @@
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = "sine";
-        osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 Ton
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.6);
         gain.gain.setValueAtTime(1, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
