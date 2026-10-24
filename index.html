@@ -46,7 +46,7 @@
       <form onsubmit="unlockWithPin(event)" class="space-y-3">
         <input type="password" id="pin-input" inputmode="numeric" maxlength="8" placeholder="PIN eingeben" required
                class="w-full text-center tracking-widest text-xl font-bold bg-stone-50 border border-stone-200 rounded-2xl py-3 focus:outline-none focus:ring-2 focus:ring-brand-500">
-        <p id="pin-error" class="hidden text-xs text-red-500 font-semibold">Falsche PIN. Bitte erneut versuchen.</p>
+        <p id="pin-error" class="hidden text-xs text-red-500 font-semibold">Falsche PIN. Zugriff verweigert.</p>
         <button type="submit" id="btn-unlock" class="w-full bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold py-3 rounded-2xl shadow-md transition-all text-sm flex items-center justify-center gap-2">
           <span>Entsperren</span>
         </button>
@@ -64,7 +64,7 @@
       <div class="flex items-center gap-2">
         <button onclick="manualSync()" id="sync-badge" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-stone-100 text-stone-600 border border-stone-200 active:scale-95 transition-all">
           <span id="sync-dot" class="w-2 h-2 rounded-full bg-stone-400"></span>
-          <span id="sync-text">Lokal</span>
+          <span id="sync-text">Gesperrt</span>
         </button>
         <button onclick="lockApp()" title="App sperren" class="p-1.5 text-stone-400 hover:text-stone-700 rounded-lg text-sm">
           🔒
@@ -454,8 +454,7 @@
 
   <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-stone-900 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg transition-all opacity-0 pointer-events-none"></div>
 
-  <!-- JAVASCRIPT LOGIK -->
- <!-- JAVASCRIPT LOGIK MIT KRYPTO-SCHUTZ -->
+  <!-- JAVASCRIPT LOGIK MIT KRYPTO-SCHUTZ -->
   <script>
     // ========================================================
     // ⚙️ KRYPTO-ZUGANGSDATEN:
@@ -683,70 +682,9 @@
         } catch(e){}
       }
 
-      state.recipes = [
-        {
-          id: "1",
-          title: "Cremige One-Pot Tomatenpasta",
-          emoji: "🍝",
-          time: 20,
-          servings: 4,
-          tags: ["Pasta", "Unter 30 Min", "Vegetarisch"],
-          ingredients: [
-            { amount: 400, unit: "g", name: "Spaghetti" },
-            { amount: 1, unit: "Dose(n)", name: "gehackte Tomaten" },
-            { amount: 1, unit: "Stk", name: "Zwiebel" },
-            { amount: 2, unit: "Zehe(n)", name: "Knoblauch" },
-            { amount: 100, unit: "g", name: "Sahne" }
-          ],
-          steps: [
-            "Zwiebeln und Knoblauch fein hacken und kurz in einem großen Topf anbraten.",
-            "Gehackte Tomaten, ca. 700ml Gemüsebrühe und die ungekochten Nudeln hinzugeben.",
-            "Alles ca. 10 Minuten köcheln lassen, bis die Pasta die Flüssigkeit aufgenommen hat.",
-            "Sahne unterrühren und mit Salz, Pfeffer und Basilikum abschmecken."
-          ]
-        },
-        {
-          id: "2",
-          title: "Kichererbsen-Kokos-Curry",
-          emoji: "🍛",
-          time: 25,
-          servings: 3,
-          tags: ["Vegetarisch", "Unter 30 Min"],
-          ingredients: [
-            { amount: 2, unit: "Dose(n)", name: "Kichererbsen" },
-            { amount: 1, unit: "Dose(n)", name: "Kokosmilch" },
-            { amount: 200, unit: "g", name: "Basmatireis" },
-            { amount: 2, unit: "Zehe(n)", name: "Knoblauch" }
-          ],
-          steps: [
-            "Reis nach Packungsanleitung gar kochen.",
-            "Knoblauch anbraten, Kokosmilch, Currypulver und abgetropfte Kichererbsen zugeben.",
-            "Etwa 10 Minuten cremig einköcheln lassen und mit Reis anrichten."
-          ]
-        },
-        {
-          id: "3",
-          title: "Saftige Zimtschnecken",
-          emoji: "🥮",
-          time: 45,
-          servings: 8,
-          tags: ["Dessert & Backen", "Snack"],
-          ingredients: [
-            { amount: 500, unit: "g", name: "Mehl" },
-            { amount: 1, unit: "Pkg", name: "Trockenhefe" },
-            { amount: 250, unit: "ml", name: "Milch" },
-            { amount: 75, unit: "g", name: "Butter" },
-            { amount: 2, unit: "EL", name: "Zimt" }
-          ],
-          steps: [
-            "Hefeteig kneten und ca. 30 Minuten an einem warmen Ort gehen lassen.",
-            "Teig ausrollen, mit geschmolzener Butter bestreichen und mit Zimt-Zucker bestreuen.",
-            "Einrollen, in Stücke schneiden und bei 180°C etwa 20 Minuten backen."
-          ]
-        }
-      ];
-      state.plan = { "Montag": "1", "Dienstag": "2" };
-      state.excludedDays = ["Sonntag"];
+      state.recipes = [];
+      state.plan = {};
+      state.excludedDays = [];
       state.stagingRecipes = [];
       state.manualGroceries = [];
       state.groceries = [];
@@ -1336,8 +1274,8 @@
         resDiv.innerHTML = `
           <div class="text-left w-full cursor-pointer" onclick="openDetailModal('${rand.id}')">
             <div class="flex items-center gap-2 mb-1">
-              ${rand.image ?
-                `<img src="${rand.image}" class="w-8 h-8 rounded-lg object-cover border border-stone-200">` :
+              ${rand.image ? 
+                `<img src="${rand.image}" class="w-8 h-8 rounded-lg object-cover border border-stone-200">` : 
                 `<span class="text-2xl">${rand.emoji}</span>`
               }
               <span class="font-bold text-stone-900">${rand.title}</span>
