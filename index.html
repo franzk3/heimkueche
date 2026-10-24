@@ -166,17 +166,17 @@
         </div>
       </div>
 
-      <!-- Schnelleingabe -->
+   <!-- Schnelleingabe (Mobil-optimiert ohne Überlappen) -->
       <datalist id="known-ingredients-list"></datalist>
-      <form onsubmit="addGroceryManual(event)" class="bg-white p-3.5 rounded-2xl border border-stone-200 shadow-sm space-y-2.5">
-        <div class="flex items-center gap-2">
-          <input type="text" list="known-ingredients-list" id="grocery-name-input" placeholder="Artikel / Haushalt (z. B. Klopapier, Milch)..." required 
-                 class="flex-1 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40">
-        </div>
-        <div class="flex items-center gap-2">
+      <form onsubmit="addGroceryManual(event)" class="bg-white p-3 rounded-2xl border border-stone-200 shadow-sm space-y-2">
+        <input type="text" list="known-ingredients-list" id="grocery-name-input" placeholder="Artikel / Haushalt (z. B. Klopapier, Milch)..." required 
+               class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40">
+        
+        <div class="grid grid-cols-12 gap-2">
           <input type="number" step="any" id="grocery-amount-input" placeholder="Menge" 
-                 class="w-24 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40">
-          <select id="grocery-unit-input" class="w-28 bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-2.5 text-sm focus:outline-none text-stone-700">
+                 class="col-span-3 min-w-0 bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500/40">
+          
+          <select id="grocery-unit-input" class="col-span-4 min-w-0 bg-stone-50 border border-stone-200 rounded-xl px-2 py-2 text-xs focus:outline-none text-stone-700">
             <option value="">(keine)</option>
             <option value="g">g</option>
             <option value="kg">kg</option>
@@ -193,8 +193,9 @@
             <option value="Rolle(n)">Rolle(n)</option>
             <option value="Flasche(n)">Flasche(n)</option>
           </select>
-          <button type="submit" class="flex-1 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold py-2.5 px-4 rounded-xl text-sm shadow-sm transition-all flex items-center justify-center gap-1.5">
-            <span class="text-lg leading-none">+</span> Hinzufügen
+          
+          <button type="submit" class="col-span-5 min-w-0 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold py-2 px-2 rounded-xl text-xs shadow-sm transition-all flex items-center justify-center gap-1 truncate">
+            <span class="text-base leading-none font-extrabold">+</span> Hinzufügen
           </button>
         </div>
       </form>
