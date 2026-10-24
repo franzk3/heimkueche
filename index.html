@@ -69,6 +69,14 @@
         <button onclick="lockApp()" title="App sperren" class="p-1.5 text-stone-400 hover:text-stone-700 rounded-lg text-sm">
           🔒
         </button>
+        <!-- Backup Buttons -->
+        <button onclick="exportBackup()" title="Backup herunterladen" class="p-1.5 text-stone-400 hover:text-stone-700 rounded-lg text-sm">
+          💾
+        </button>
+        <button onclick="document.getElementById('backup-import-input').click()" title="Backup wiederherstellen" class="p-1.5 text-stone-400 hover:text-stone-700 rounded-lg text-sm">
+          📥
+        </button>
+        <input type="file" id="backup-import-input" accept=".json" class="hidden" onchange="importBackup(event)">
       </div>
     </div>
   </header>
@@ -1965,6 +1973,67 @@
       toast.innerText = text;
       toast.classList.remove('opacity-0');
       setTimeout(() => toast.classList.add('opacity-0'), 2500);
+    }
+
+    // --- BACKUP EXPORT & IMPORT ---
+    function exportBackup() {
+      // Erzeugt ein JSON-File mit aktuellem Stand
+      const backupData = JSON.stringify(state, null, 2);
+      const blob = new Blob([backupData], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      
+      const now = new Date();
+      const dateStr = now.toISOString().slice(0, 10); // z.B. 2026-10-24
+      
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `BF_Rezepte_Backup_${dateStr}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      showToast("💾 Backup erfolgreich heruntergeladen!");
+    }
+
+    function importBackup(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async function(evt) {
+        try {
+          const importedState = JSON.parse(evt.target.result);
+
+          // Grundlegende Validierung
+          if (!importedState || !Array.isArray(importedState.recipes)) {
+            throw new Error("Ungültiges Backup-Format.");
+          }
+
+          if (!confirm(`Soll das Backup mit ${importedState.recipes.length} Rezepten wirklich eingespielt werden? Bestehende Daten werden überschrieben.`)) {
+            e.target.value = "";
+            return;
+          }
+
+          // State aktualisieren
+          state = Object.assign(state, importedState);
+          saveLocalData();
+          renderAll();
+
+          // Sofort in die Cloud hochladen
+          if (activeDecryptedKey) {
+            await pushToCloud();
+          }
+
+          showToast("📥 Backup erfolgreich importiert!");
+        } catch (err) {
+          console.error("Backup-Fehler:", err);
+          alert("Fehler beim Importieren: Die Datei ist fehlerhaft oder hat das falsche Format.");
+        } finally {
+          e.target.value = ""; // Input zurücksetzen für erneute Auswahl
+        }
+      };
+      reader.readAsText(file);
     }
   </script>
 </body>
