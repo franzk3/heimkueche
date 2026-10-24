@@ -81,9 +81,8 @@
         </button>
         <input type="file" id="backup-import-input" accept=".json" class="hidden" onchange="importBackup(event)">
         
-        <button onclick="manualSync()" id="sync-badge" class="flex items-center gap-2 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 active:scale-95 transition-all">
-          <span id="sync-dot" class="w-2 h-2 rounded-full bg-stone-400"></span>
-          <span id="sync-text">Gesperrt</span>
+      <button onclick="manualSync()" id="sync-badge" title="Status" class="p-2 rounded-full bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 active:scale-90 transition-all flex items-center justify-center">
+            <span id="sync-dot" class="w-2.5 h-2.5 rounded-full bg-stone-400"></span>
         </button>
         <button onclick="lockApp()" title="App sperren" class="p-1.5 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-lg text-sm">
           🔒
@@ -710,11 +709,23 @@
       pullFromCloud();
     }
 
-    function updateSyncBadge(status, text) {
+  function updateSyncBadge(status, text) {
       const dot = document.getElementById('sync-dot');
-      const label = document.getElementById('sync-text');
-      if (label) label.innerText = text;
-      if (dot) dot.className = "w-2 h-2 rounded-full " + (status === 'online' ? "bg-emerald-500 animate-pulse" : (status === 'loading' ? "bg-amber-400" : "bg-stone-400"));
+      const badge = document.getElementById('sync-badge');
+      if (badge && text) badge.title = text;
+      
+      if (dot) {
+        if (status === 'online') {
+          // Alles passt: Ruhiger, satter grüner Punkt
+          dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]";
+        } else if (status === 'loading') {
+          // Speichert gerade: Leicht pulsierender gelber Punkt
+          dot.className = "w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse";
+        } else {
+          // Offline / Gesperrt: Grauer Punkt
+          dot.className = "w-2.5 h-2.5 rounded-full bg-stone-400 dark:bg-stone-600";
+        }
+      }
     }
 
     // --- BACKUP EXPORT & IMPORT ---
