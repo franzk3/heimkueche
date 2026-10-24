@@ -138,6 +138,21 @@
         </div>
       </div>
 
+      <!-- Einklappbarer Kategorie-Filter für den Wochenplaner -->
+      <details class="bg-white rounded-2xl border border-stone-200 p-3 shadow-sm">
+        <summary class="text-xs font-bold text-stone-700 cursor-pointer select-none flex items-center justify-between">
+          <span>🎯 Erlaubte Kategorien für Planer & Auto-Plan</span>
+          <span class="text-[10px] text-brand-600 font-semibold">Anpassen ▾</span>
+        </summary>
+        <div class="pt-3 border-t border-stone-100 mt-2 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] text-stone-500">Nur Gerichte aus diesen Kategorien vorschlagen:</span>
+            <button type="button" onclick="selectAllPlanCategories(true)" class="text-[10px] text-brand-600 font-semibold hover:underline">Alle wählen</button>
+          </div>
+          <div id="plan-category-filters" class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto"></div>
+        </div>
+      </details>
+
       <div id="week-grid" class="space-y-2.5"></div>
     </section>
 
@@ -447,7 +462,7 @@
     const ENCRYPTED_KEY_PAYLOAD = "eyJzYWx0IjpbMTY5LDExLDIxOCw5Myw3MCwxMzcsNzYsODMsNCwxMTMsMjI0LDI0NCwxNjcsNTgsMjEwLDMyXSwiaXYiOlsxNDEsMTY0LDIzNiwzOSwxMzIsMjA0LDEzNywyMzUsMTUwLDEyMiwxNDksMV0sImRhdGEiOlsxMjksNiwxMDAsMTMwLDQwLDEzNCw5NSwxNDMsNTQsOCw0MCw5MCwxMDUsMTAyLDM0LDI0MywyNTQsMTQ3LDIxNCwyNDUsMjI3LDE0MywyNTMsMTk1LDk5LDE2MCwxMzksMzEsNDIsMTI1LDgzLDEyMiw5NywyNTIsMTkxLDI5LDE1OCw1NywyMjIsMTUyLDgyLDIzLDE2MiwxMDgsNDEsMTQ0LDE3NSw2MSw2OSwxNzAsMjUxLDE0MywzMSwyNTIsMTI5LDE4MywyMDksMTA2LDIyNywxNzcsMTAwLDI2LDIxLDY1LDEyNiwzMywxOTgsMjM0LDIzMywyMTIsNTMsMTIxLDE5Myw5LDEzMiwzMV19";
     const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
 
-    let activeDecryptedKey = null; // Liegt nur flüchtig im Arbeitsspeicher!
+    let activeDecryptedKey = null;
 
     const DAYS = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
 
@@ -473,7 +488,8 @@
       manualGroceries: [],
       groceries: [],
       isShoppingMode: false,
-      allowedRandomCategories: []
+      allowedRandomCategories: [],
+      allowedPlanCategories: []
     };
 
     let activeFilter = 'all';
@@ -580,6 +596,7 @@
           if (Array.isArray(data.record.groceries)) state.groceries = data.record.groceries;
           if (typeof data.record.isShoppingMode === 'boolean') state.isShoppingMode = data.record.isShoppingMode;
           if (Array.isArray(data.record.allowedRandomCategories)) state.allowedRandomCategories = data.record.allowedRandomCategories;
+          if (Array.isArray(data.record.allowedPlanCategories)) state.allowedPlanCategories = data.record.allowedPlanCategories;
 
           saveLocalData();
           renderAll();
@@ -630,7 +647,7 @@
 
     // --- LOKALE DATEN & DEFAULTS ---
     function loadLocalData() {
-      const stored = localStorage.getItem("heimkueche_data_v14");
+      const stored = localStorage.getItem("heimkueche_data_v15");
       if (stored) {
         try { 
           state = Object.assign(state, JSON.parse(stored)); 
@@ -707,16 +724,18 @@
       state.groceries = [];
       state.isShoppingMode = false;
       state.allowedRandomCategories = ["Vegetarisch", "Unter 30 Min", "Pasta", "Fleisch", "Suppe"];
+      state.allowedPlanCategories = ["Vegetarisch", "Unter 30 Min", "Pasta", "Fleisch", "Suppe"];
       saveLocalData();
     }
 
     function saveLocalData() {
-      localStorage.setItem("heimkueche_data_v14", JSON.stringify(state));
+      localStorage.setItem("heimkueche_data_v15", JSON.stringify(state));
     }
 
     function renderAll() {
       renderCategoryFilters();
       renderRecipes();
+      renderPlanCategoryFilters();
       renderPlan();
       renderGroceries();
       renderRandomCategoryFilters();
@@ -790,6 +809,7 @@
         openCategoryModal();
         renderCategoryFilters();
         renderRandomCategoryFilters();
+        renderPlanCategoryFilters();
         showToast("Kategorie hinzugefügt");
       }
     }
@@ -799,10 +819,14 @@
       if (state.allowedRandomCategories) {
         state.allowedRandomCategories = state.allowedRandomCategories.filter(c => c !== removed);
       }
+      if (state.allowedPlanCategories) {
+        state.allowedPlanCategories = state.allowedPlanCategories.filter(c => c !== removed);
+      }
       pushToCloud();
       openCategoryModal();
       renderCategoryFilters();
       renderRandomCategoryFilters();
+      renderPlanCategoryFilters();
       renderRecipes();
     }
 
@@ -864,6 +888,47 @@
       state.allowedRandomCategories = select ? [...state.categories] : [];
       pushToCloud();
       renderRandomCategoryFilters();
+    }
+
+    // --- WOCHENPLANER KATEGORIE-FILTER ---
+    function renderPlanCategoryFilters() {
+      const container = document.getElementById('plan-category-filters');
+      if (!container) return;
+      container.innerHTML = "";
+
+      if (!state.allowedPlanCategories || state.allowedPlanCategories.length === 0) {
+        state.allowedPlanCategories = state.categories.filter(c => !["dessert & backen", "snack", "süßes", "kuchen"].includes(c.toLowerCase()));
+      }
+
+      state.categories.forEach(cat => {
+        const isChecked = state.allowedPlanCategories.includes(cat);
+        const label = document.createElement('label');
+        label.className = `flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs cursor-pointer select-none transition-all ${isChecked ? 'bg-brand-50 border-brand-300 text-brand-700 font-semibold' : 'bg-white border-stone-200 text-stone-500'}`;
+        label.innerHTML = `
+          <input type="checkbox" value="${cat}" ${isChecked ? 'checked' : ''} onchange="togglePlanCategory('${cat}', this.checked)" class="rounded text-brand-600 focus:ring-0 w-3.5 h-3.5">
+          <span>${cat}</span>
+        `;
+        container.appendChild(label);
+      });
+    }
+
+    function togglePlanCategory(cat, checked) {
+      if (!state.allowedPlanCategories) state.allowedPlanCategories = [];
+      if (checked) {
+        if (!state.allowedPlanCategories.includes(cat)) state.allowedPlanCategories.push(cat);
+      } else {
+        state.allowedPlanCategories = state.allowedPlanCategories.filter(c => c !== cat);
+      }
+      pushToCloud();
+      renderPlanCategoryFilters();
+      renderPlan();
+    }
+
+    function selectAllPlanCategories(select) {
+      state.allowedPlanCategories = select ? [...state.categories] : [];
+      pushToCloud();
+      renderPlanCategoryFilters();
+      renderPlan();
     }
 
     // --- FORMULAR ZEILEN ---
@@ -1260,6 +1325,14 @@
       const grid = document.getElementById('week-grid');
       grid.innerHTML = "";
 
+      const allowedCats = (state.allowedPlanCategories || []).map(c => c.toLowerCase());
+      
+      const selectableRecipes = state.recipes.filter(r => {
+        if (allowedCats.length === 0) return true;
+        if (!r.tags || r.tags.length === 0) return true;
+        return r.tags.some(t => allowedCats.includes(t.toLowerCase()));
+      });
+
       DAYS.forEach(day => {
         const isExcluded = state.excludedDays.includes(day);
         const recipeId = state.plan[day];
@@ -1290,9 +1363,10 @@
             </div>
 
             ${!isExcluded ? `
-              <select onchange="assignDayPlan('${day}', this.value)" class="bg-stone-50 border border-stone-200 text-xs rounded-lg px-2 py-1.5 text-stone-600 focus:outline-none max-w-[130px]">
-                <option value="">Wählen...</option>
-                ${state.recipes.map(r => `<option value="${r.id}" ${r.id === recipeId ? 'selected':''}>${r.emoji} ${r.title}</option>`).join('')}
+              <select onchange="assignDayPlan('${day}', this.value)" class="bg-stone-50 border border-stone-200 text-xs font-semibold rounded-lg px-2 py-1.5 text-stone-600 focus:outline-none max-w-[100px] cursor-pointer">
+                <option value="" disabled selected hidden>${recipe ? 'Ändern ▾' : 'Wählen ▾'}</option>
+                ${recipe ? `<option value="__REMOVE__" class="text-red-500">✕ (Kein Rezept)</option>` : ''}
+                ${selectableRecipes.map(r => `<option value="${r.id}">${r.emoji} ${r.title}</option>`).join('')}
               </select>
             ` : ''}
           </div>
@@ -1313,31 +1387,38 @@
     }
 
     function assignDayPlan(day, recipeId) {
-      if (recipeId) state.plan[day] = recipeId;
-      else delete state.plan[day];
+      if (recipeId === "__REMOVE__" || !recipeId) {
+        delete state.plan[day];
+      } else {
+        state.plan[day] = recipeId;
+      }
       pushToCloud();
       renderPlan();
     }
 
     function autoPlanWeek() {
       if (state.recipes.length === 0) return;
-      const allowedCats = (state.allowedRandomCategories || []).map(c => c.toLowerCase());
+      const allowedCats = (state.allowedPlanCategories || []).map(c => c.toLowerCase());
       const eligibleRecipes = state.recipes.filter(r => {
+        if (allowedCats.length === 0) return true;
         if (!r.tags || r.tags.length === 0) return true;
         return r.tags.some(t => allowedCats.includes(t.toLowerCase()));
       });
 
-      const pool = eligibleRecipes.length > 0 ? eligibleRecipes : state.recipes;
+      if (eligibleRecipes.length === 0) {
+        showToast("Keine Rezepte für die gewählten Kategorien gefunden!");
+        return;
+      }
 
       DAYS.forEach(day => {
         if (!state.excludedDays.includes(day)) {
-          const rand = pool[Math.floor(Math.random() * pool.length)];
+          const rand = eligibleRecipes[Math.floor(Math.random() * eligibleRecipes.length)];
           state.plan[day] = rand.id;
         }
       });
       pushToCloud();
       renderPlan();
-      showToast("Aktive Tage geplant!");
+      showToast("Aktive Tage passend befüllt!");
     }
 
     // --- ÄHNLICHKEITSPRÜFUNG (FUZZY MATCHING) ---
