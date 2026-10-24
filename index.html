@@ -35,7 +35,7 @@
 </head>
 <body class="bg-stone-100 text-stone-800 antialiased min-h-screen">
 
-  <!-- PIN-SCHUTZ OVERLAY (KRYPTOGRAFISCH GESICHERT) -->
+  <!-- PIN-SCHUTZ OVERLAY -->
   <div id="pin-overlay" class="fixed inset-0 z-50 bg-stone-900/95 backdrop-blur-md flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl text-center space-y-4">
       <div class="text-4xl">🔒</div>
@@ -46,7 +46,7 @@
       <form onsubmit="unlockWithPin(event)" class="space-y-3">
         <input type="password" id="pin-input" inputmode="numeric" maxlength="8" placeholder="PIN eingeben" required
                class="w-full text-center tracking-widest text-xl font-bold bg-stone-50 border border-stone-200 rounded-2xl py-3 focus:outline-none focus:ring-2 focus:ring-brand-500">
-        <p id="pin-error" class="hidden text-xs text-red-500 font-semibold">Falsche PIN. Zugriff verweigert.</p>
+        <p id="pin-error" class="hidden text-xs text-red-500 font-semibold">Falsche PIN. Bitte erneut versuchen.</p>
         <button type="submit" id="btn-unlock" class="w-full bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold py-3 rounded-2xl shadow-md transition-all text-sm flex items-center justify-center gap-2">
           <span>Entsperren</span>
         </button>
@@ -166,7 +166,7 @@
         </div>
       </div>
 
-   <!-- Schnelleingabe (Mobil-optimiert ohne Überlappen) -->
+      <!-- Schnelleingabe (Mobil-optimiert ohne Überlappen) -->
       <datalist id="known-ingredients-list"></datalist>
       <form onsubmit="addGroceryManual(event)" class="bg-white p-3 rounded-2xl border border-stone-200 shadow-sm space-y-2">
         <input type="text" list="known-ingredients-list" id="grocery-name-input" placeholder="Artikel / Haushalt (z. B. Klopapier, Milch)..." required 
@@ -454,16 +454,15 @@
 
   <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-stone-900 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg transition-all opacity-0 pointer-events-none"></div>
 
-  <!-- JAVASCRIPT LOGIK MIT KRYPTO-SCHUTZ -->
+  <!-- JAVASCRIPT LOGIK -->
   <script>
     // ========================================================
-    // ⚙️ HIER DEINE BIN-ID & VERSCHLÜSSELTEN KEY EINTRAGEN:
+    // ⚙️ HIER DEINE ZUGANGSDATEN EINTRAGEN:
     // ========================================================
     const JSONBIN_ID = "6adb8714ffd5d160538623fd";
-    const ENCRYPTED_KEY_PAYLOAD = "eyJzYWx0IjpbMTY5LDExLDIxOCw5Myw3MCwxMzcsNzYsODMsNCwxMTMsMjI0LDI0NCwxNjcsNTgsMjEwLDMyXSwiaXYiOlsxNDEsMTY0LDIzNiwzOSwxMzIsMjA0LDEzNywyMzUsMTUwLDEyMiwxNDksMV0sImRhdGEiOlsxMjksNiwxMDAsMTMwLDQwLDEzNCw5NSwxNDMsNTQsOCw0MCw5MCwxMDUsMTAyLDM0LDI0MywyNTQsMTQ3LDIxNCwyNDUsMjI3LDE0MywyNTMsMTk1LDk5LDE2MCwxMzksMzEsNDIsMTI1LDgzLDEyMiw5NywyNTIsMTkxLDI5LDE1OCw1NywyMjIsMTUyLDgyLDIzLDE2MiwxMDgsNDEsMTQ0LDE3NSw2MSw2OSwxNzAsMjUxLDE0MywzMSwyNTIsMTI5LDE4MywyMDksMTA2LDIyNywxNzcsMTAwLDI2LDIxLDY1LDEyNiwzMywxOTgsMjM0LDIzMywyMTIsNTMsMTIxLDE5Myw5LDEzMiwzMV19";
+    const JSONBIN_KEY = "eyJzYWx0IjpbMTY5LDExLDIxOCw5Myw3MCwxMzcsNzYsODMsNCwxMTMsMjI0LDI0NCwxNjcsNTgsMjEwLDMyXSwiaXYiOlsxNDEsMTY0LDIzNiwzOSwxMzIsMjA0LDEzNywyMzUsMTUwLDEyMiwxNDksMV0sImRhdGEiOlsxMjksNiwxMDAsMTMwLDQwLDEzNCw5NSwxNDMsNTQsOCw0MCw5MCwxMDUsMTAyLDM0LDI0MywyNTQsMTQ3LDIxNCwyNDUsMjI3LDE0MywyNTMsMTk1LDk5LDE2MCwxMzksMzEsNDIsMTI1LDgzLDEyMiw5NywyNTIsMTkxLDI5LDE1OCw1NywyMjIsMTUyLDgyLDIzLDE2MiwxMDgsNDEsMTQ0LDE3NSw2MSw2OSwxNzAsMjUxLDE0MywzMSwyNTIsMTI5LDE4MywyMDksMTA2LDIyNywxNzcsMTAwLDI2LDIxLDY1LDEyNiwzMywxOTgsMjM0LDIzMywyMTIsNTMsMTIxLDE5Myw5LDEzMiwzMV19";
+    const HOUSEHOLD_PIN = "1234"; // Eure gemeinsame Wunsch-PIN
     const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
-
-    let activeDecryptedKey = null;
 
     const DAYS = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
 
@@ -489,8 +488,8 @@
       manualGroceries: [],
       groceries: [],
       isShoppingMode: false,
-      allowedRandomCategories: [],
-      allowedPlanCategories: []
+      allowedRandomCategories: ["Vegetarisch", "Unter 30 Min", "Pasta", "Fleisch", "Suppe"],
+      allowedPlanCategories: ["Vegetarisch", "Unter 30 Min", "Pasta", "Fleisch", "Suppe"]
     };
 
     let activeFilter = 'all';
@@ -503,45 +502,32 @@
     let timerRemainingSeconds = 0;
     let isTimerRunning = false;
 
-    // --- KRYPTOGRAFISCHE ENTSCHLÜSSELUNG PER PIN ---
-    async function decryptKeyWithPin(pin) {
-      if (!ENCRYPTED_KEY_PAYLOAD || ENCRYPTED_KEY_PAYLOAD === "DEIN_VERSCHLUESSELTER_STRING_AUS_SCHRITT_1") {
-        throw new Error("Kein verschlüsselter Key hinterlegt.");
+    // --- PIN AUTHENTIFIZIERUNG ---
+    function checkStoredPin() {
+      const stored = localStorage.getItem("bf_auth_done");
+      if (stored === "true") {
+        document.getElementById('pin-overlay').classList.add('hidden');
+        pullFromCloud();
+      } else {
+        document.getElementById('pin-overlay').classList.remove('hidden');
+        setTimeout(() => document.getElementById('pin-input').focus(), 150);
       }
-      const raw = JSON.parse(atob(ENCRYPTED_KEY_PAYLOAD));
-      const salt = new Uint8Array(raw.salt);
-      const iv = new Uint8Array(raw.iv);
-      const data = new Uint8Array(raw.data);
-
-      const enc = new TextEncoder();
-      const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(pin), "PBKDF2", false, ["deriveKey"]);
-      const key = await crypto.subtle.deriveKey(
-        { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
-        keyMaterial,
-        { name: "AES-GCM", length: 256 },
-        false,
-        ["decrypt"]
-      );
-
-      const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
-      return new TextDecoder().decode(decrypted);
     }
 
-    async function unlockWithPin(e) {
+    function unlockWithPin(e) {
       e.preventDefault();
       const input = document.getElementById('pin-input');
       const err = document.getElementById('pin-error');
       const pin = input.value.trim();
 
-      try {
-        activeDecryptedKey = await decryptKeyWithPin(pin);
-        localStorage.setItem("bf_stored_pin", pin);
+      if (pin === HOUSEHOLD_PIN) {
+        localStorage.setItem("bf_auth_done", "true");
         document.getElementById('pin-overlay').classList.add('hidden');
         err.classList.add('hidden');
         input.value = "";
         showToast("Erfolgreich entsperrt!");
         pullFromCloud();
-      } catch (ex) {
+      } else {
         err.classList.remove('hidden');
         input.value = "";
         input.focus();
@@ -549,40 +535,26 @@
     }
 
     function lockApp() {
-      activeDecryptedKey = null;
-      localStorage.removeItem("bf_stored_pin");
+      localStorage.removeItem("bf_auth_done");
       document.getElementById('pin-overlay').classList.remove('hidden');
       updateSyncBadge("offline", "Gesperrt");
       showToast("App gesperrt.");
     }
 
     // --- STARTUP ---
-    window.addEventListener('DOMContentLoaded', async () => {
+    window.addEventListener('DOMContentLoaded', () => {
       try { loadLocalData(); } catch(e) {}
       renderAll();
-
-      const savedPin = localStorage.getItem("bf_stored_pin");
-      if (savedPin) {
-        try {
-          activeDecryptedKey = await decryptKeyWithPin(savedPin);
-          document.getElementById('pin-overlay').classList.add('hidden');
-          pullFromCloud();
-          setInterval(pullFromCloud, 30000);
-          return;
-        } catch (e) {
-          localStorage.removeItem("bf_stored_pin");
-        }
-      }
-      document.getElementById('pin-overlay').classList.remove('hidden');
-      setTimeout(() => document.getElementById('pin-input').focus(), 150);
+      checkStoredPin();
+      setInterval(pullFromCloud, 30000);
     });
 
     // --- SYNC ENGINE ---
     async function pullFromCloud() {
-      if (!activeDecryptedKey || !JSONBIN_ID || JSONBIN_ID === "DEINE_BIN_ID_HIER") return;
+      if (!JSONBIN_ID || JSONBIN_ID === "DEINE_BIN_ID_HIER" || !JSONBIN_KEY || JSONBIN_KEY === "DEIN_ACCESS_KEY_HIER") return;
       try {
         const res = await fetch(`${JSONBIN_URL}/latest`, {
-          headers: { "X-Access-Key": activeDecryptedKey }
+          headers: { "X-Access-Key": JSONBIN_KEY }
         });
         if (!res.ok) throw new Error("Status " + res.status);
         const data = await res.json();
@@ -612,7 +584,7 @@
 
     async function pushToCloud() {
       saveLocalData();
-      if (!activeDecryptedKey || !JSONBIN_ID || JSONBIN_ID === "DEINE_BIN_ID_HIER") return;
+      if (!JSONBIN_ID || JSONBIN_ID === "DEINE_BIN_ID_HIER" || !JSONBIN_KEY || JSONBIN_KEY === "DEIN_ACCESS_KEY_HIER") return;
 
       updateSyncBadge("loading", "Speichere...");
       try {
@@ -620,7 +592,7 @@
           method: "PUT",
           headers: { 
             "Content-Type": "application/json", 
-            "X-Access-Key": activeDecryptedKey 
+            "X-Access-Key": JSONBIN_KEY 
           },
           body: JSON.stringify(state)
         });
@@ -631,10 +603,6 @@
     }
 
     function manualSync() {
-      if (!activeDecryptedKey) {
-        showToast("Bitte erst entsperren!");
-        return;
-      }
       showToast("Synchronisiere...");
       pullFromCloud();
     }
@@ -648,7 +616,7 @@
 
     // --- LOKALE DATEN & DEFAULTS ---
     function loadLocalData() {
-      const stored = localStorage.getItem("heimkueche_data_v15");
+      const stored = localStorage.getItem("heimkueche_data_v16");
       if (stored) {
         try { 
           state = Object.assign(state, JSON.parse(stored)); 
@@ -724,13 +692,11 @@
       state.manualGroceries = [];
       state.groceries = [];
       state.isShoppingMode = false;
-      state.allowedRandomCategories = ["Vegetarisch", "Unter 30 Min", "Pasta", "Fleisch", "Suppe"];
-      state.allowedPlanCategories = ["Vegetarisch", "Unter 30 Min", "Pasta", "Fleisch", "Suppe"];
       saveLocalData();
     }
 
     function saveLocalData() {
-      localStorage.setItem("heimkueche_data_v15", JSON.stringify(state));
+      localStorage.setItem("heimkueche_data_v16", JSON.stringify(state));
     }
 
     function renderAll() {
@@ -858,10 +824,6 @@
       if (!container) return;
       container.innerHTML = "";
 
-      if (!state.allowedRandomCategories) {
-        state.allowedRandomCategories = state.categories.filter(c => !["dessert & backen", "snack", "süßes", "kuchen"].includes(c.toLowerCase()));
-      }
-
       state.categories.forEach(cat => {
         const isChecked = state.allowedRandomCategories.includes(cat);
         const label = document.createElement('label');
@@ -896,10 +858,6 @@
       const container = document.getElementById('plan-category-filters');
       if (!container) return;
       container.innerHTML = "";
-
-      if (!state.allowedPlanCategories || state.allowedPlanCategories.length === 0) {
-        state.allowedPlanCategories = state.categories.filter(c => !["dessert & backen", "snack", "süßes", "kuchen"].includes(c.toLowerCase()));
-      }
 
       state.categories.forEach(cat => {
         const isChecked = state.allowedPlanCategories.includes(cat);
@@ -1322,7 +1280,7 @@
     }
 
     // --- WOCHENPLANER ---
-  function renderPlan() {
+    function renderPlan() {
       const grid = document.getElementById('week-grid');
       grid.innerHTML = "";
 
@@ -1344,7 +1302,6 @@
         
         row.innerHTML = `
           <div class="flex items-center justify-between gap-2 w-full min-w-0">
-            <!-- Wochentag & Checkbox: Feste minimale Breite, schrumpft nicht -->
             <div class="flex items-center gap-2 flex-shrink-0 w-24">
               <input type="checkbox" title="Tag einbeziehen/ausschließen" ${!isExcluded ? 'checked' : ''} 
                      onchange="toggleExcludeDay('${day}')" 
@@ -1352,7 +1309,6 @@
               <span class="text-xs font-bold ${isExcluded ? 'text-stone-400 line-through' : 'text-stone-700'}">${day.slice(0, 2)}.</span>
             </div>
 
-            <!-- Rezeptname: min-w-0 und truncate zwingen den Text zum Kürzen mit '...' -->
             <div class="flex-1 min-w-0 px-1">
               ${isExcluded ? 
                 `<span class="text-xs text-stone-400 italic block truncate">Ausgeschlossen</span>` : 
@@ -1365,7 +1321,6 @@
               }
             </div>
 
-            <!-- Menü: flex-shrink-0 garantiert, dass das Menü immer vollständig sichtbar bleibt -->
             ${!isExcluded ? `
               <div class="flex-shrink-0">
                 <select onchange="assignDayPlan('${day}', this.value)" class="bg-stone-50 border border-stone-200 text-xs font-semibold rounded-lg px-2 py-1.5 text-stone-600 focus:outline-none w-[84px] cursor-pointer text-center">
@@ -1374,48 +1329,6 @@
                   ${selectableRecipes.map(r => `<option value="${r.id}">${r.emoji} ${r.title}</option>`).join('')}
                 </select>
               </div>
-            ` : ''}
-          </div>
-        `;
-        grid.appendChild(row);
-      });
-    }
-
-      DAYS.forEach(day => {
-        const isExcluded = state.excludedDays.includes(day);
-        const recipeId = state.plan[day];
-        const recipe = state.recipes.find(r => r.id === recipeId);
-
-        const row = document.createElement('div');
-        row.className = `p-3 rounded-xl border transition-all ${isExcluded ? 'bg-stone-100/70 border-stone-200/50 opacity-60' : 'bg-white border-stone-200/80 shadow-sm'}`;
-        
-        row.innerHTML = `
-          <div class="flex items-center justify-between gap-2">
-            <div class="flex items-center gap-2 min-w-[90px]">
-              <input type="checkbox" title="Tag einbeziehen/ausschließen" ${!isExcluded ? 'checked' : ''} 
-                     onchange="toggleExcludeDay('${day}')" 
-                     class="rounded text-brand-600 focus:ring-0 w-3.5 h-3.5">
-              <span class="text-xs font-bold ${isExcluded ? 'text-stone-400 line-through' : 'text-stone-700'}">${day}</span>
-            </div>
-
-            <div class="flex-1 px-2">
-              ${isExcluded ? 
-                `<span class="text-xs text-stone-400 italic">Ausgeschlossen</span>` : 
-                (recipe ? `
-                  <div onclick="openDetailModal('${recipe.id}')" class="flex items-center gap-1.5 cursor-pointer font-semibold text-xs text-stone-900 truncate">
-                    ${recipe.image ? `<img src="${recipe.image}" class="w-4 h-4 rounded object-cover">` : `<span>${recipe.emoji}</span>`}
-                    <span class="truncate">${recipe.title}</span>
-                  </div>
-                ` : `<span class="text-xs text-stone-300 italic">Noch nichts gewählt</span>`)
-              }
-            </div>
-
-            ${!isExcluded ? `
-              <select onchange="assignDayPlan('${day}', this.value)" class="bg-stone-50 border border-stone-200 text-xs font-semibold rounded-lg px-2 py-1.5 text-stone-600 focus:outline-none max-w-[100px] cursor-pointer">
-                <option value="" disabled selected hidden>${recipe ? 'Ändern ▾' : 'Wählen ▾'}</option>
-                ${recipe ? `<option value="__REMOVE__" class="text-red-500">✕ (Kein Rezept)</option>` : ''}
-                ${selectableRecipes.map(r => `<option value="${r.id}">${r.emoji} ${r.title}</option>`).join('')}
-              </select>
             ` : ''}
           </div>
         `;
