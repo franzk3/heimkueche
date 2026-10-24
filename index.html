@@ -456,91 +456,125 @@
 
   <!-- JAVASCRIPT LOGIK -->
   <script>
-    // ========================================================
-    // ⚙️ HIER DEINE ZUGANGSDATEN EINTRAGEN:
-    // ========================================================
-    const JSONBIN_ID = "6adb8714ffd5d160538623fd";
-    const JSONBIN_KEY = "eyJzYWx0IjpbMTY5LDExLDIxOCw5Myw3MCwxMzcsNzYsODMsNCwxMTMsMjI0LDI0NCwxNjcsNTgsMjEwLDMyXSwiaXYiOlsxNDEsMTY0LDIzNiwzOSwxMzIsMjA0LDEzNywyMzUsMTUwLDEyMiwxNDksMV0sImRhdGEiOlsxMjksNiwxMDAsMTMwLDQwLDEzNCw5NSwxNDMsNTQsOCw0MCw5MCwxMDUsMTAyLDM0LDI0MywyNTQsMTQ3LDIxNCwyNDUsMjI3LDE0MywyNTMsMTk1LDk5LDE2MCwxMzksMzEsNDIsMTI1LDgzLDEyMiw5NywyNTIsMTkxLDI5LDE1OCw1NywyMjIsMTUyLDgyLDIzLDE2MiwxMDgsNDEsMTQ0LDE3NSw2MSw2OSwxNzAsMjUxLDE0MywzMSwyNTIsMTI5LDE4MywyMDksMTA2LDIyNywxNzcsMTAwLDI2LDIxLDY1LDEyNiwzMywxOTgsMjM0LDIzMywyMTIsNTMsMTIxLDE5Myw5LDEzMiwzMV19";
-    const HOUSEHOLD_PIN = "1234"; // Eure gemeinsame Wunsch-PIN
-    const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
+   <script>
+  // ========================================================
+  // ⚙️ KRYPTO-ZUGANGSDATEN:
+  // ========================================================
+  const JSONBIN_ID = "6adb8714ffd5d160538623fd";
+  const ENCRYPTED_KEY_PAYLOAD = "eyJzYWx0IjpbMTY5LDExLDIxOCw5Myw3MCwxMzcsNzYsODMsNCwxMTMsMjI0LDI0NCwxNjcsNTgsMjEwLDMyXSwiaXYiOlsxNDEsMTY0LDIzNiwzOSwxMzIsMjA0LDEzNywyMzUsMTUwLDEyMiwxNDksMV0sImRhdGEiOlsxMjksNiwxMDAsMTMwLDQwLDEzNCw5NSwxNDMsNTQsOCw0MCw5MCwxMDUsMTAyLDM0LDI0MywyNTQsMTQ3LDIxNCwyNDUsMjI3LDE0MywyNTMsMTk1LDk5LDE2MCwxMzksMzEsNDIsMTI1LDgzLDEyMiw5NywyNTIsMTkxLDI5LDE1OCw1NywyMjIsMTUyLDgyLDIzLDE2MiwxMDgsNDEsMTQ0LDE3NSw2MSw2OSwxNzAsMjUxLDE0MywzMSwyNTIsMTI5LDE4MywyMDksMTA2LDIyNywxNzcsMTAwLDI2LDIxLDY1LDEyNiwzMywxOTgsMjM0LDIzMywyMTIsNTMsMTIxLDE5Myw5LDEzMiwzMV19";
+  const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
 
-    const DAYS = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
+  let activeDecryptedKey = null; // Liegt nur flüchtig im RAM des Handys
 
-    const UNITS = ["", "g", "kg", "ml", "l", "TL", "EL", "Prise", "Stk", "Zehe(n)", "Dose(n)", "Bund", "Pkg", "Rolle(n)", "Flasche(n)"];
+  const DAYS = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
 
-    const INGREDIENT_EXAMPLES = [
-      { amount: 400, unit: "g", name: "Spaghetti" },
-      { amount: 2, unit: "Zehe(n)", name: "Knoblauch" },
-      { amount: 1, unit: "Dose(n)", name: "gehackte Tomaten" },
-      { amount: 1, unit: "Bund", name: "Basilikum" },
-      { amount: 100, unit: "ml", name: "Sahne" },
-      { amount: 1, unit: "EL", name: "Olivenöl" },
-      { amount: 1, unit: "Prise", name: "Salz & Pfeffer" },
-      { amount: 250, unit: "g", name: "Champignons" }
-    ];
+  const UNITS = ["", "g", "kg", "ml", "l", "TL", "EL", "Prise", "Stk", "Zehe(n)", "Dose(n)", "Bund", "Pkg", "Rolle(n)", "Flasche(n)"];
 
-    let state = {
-      categories: ["Vegetarisch", "Unter 30 Min", "Pasta", "Fleisch", "Suppe", "Dessert & Backen", "Snack"],
-      recipes: [],
-      plan: {},
-      excludedDays: [],
-      stagingRecipes: [],
-      manualGroceries: [],
-      groceries: [],
-      isShoppingMode: false,
-      allowedRandomCategories: ["Vegetarisch", "Unter 30 Min", "Pasta", "Fleisch", "Suppe"],
-      allowedPlanCategories: ["Vegetarisch", "Unter 30 Min", "Pasta", "Fleisch", "Suppe"]
-    };
+  const INGREDIENT_EXAMPLES = [
+    { amount: 400, unit: "g", name: "Spaghetti" },
+    { amount: 2, unit: "Zehe(n)", name: "Knoblauch" },
+    { amount: 1, unit: "Dose(n)", name: "gehackte Tomaten" },
+    { amount: 1, unit: "Bund", name: "Basilikum" },
+    { amount: 100, unit: "ml", name: "Sahne" },
+    { amount: 1, unit: "EL", name: "Olivenöl" },
+    { amount: 1, unit: "Prise", name: "Salz & Pfeffer" },
+    { amount: 250, unit: "g", name: "Champignons" }
+  ];
 
-    let activeFilter = 'all';
-    let currentDetailRecipe = null;
-    let currentServingsFactor = 1;
-    let currentFormImageData = null;
+  let state = {
+    categories: ["Vegetarisch", "Unter 30 Min", "Pasta", "Fleisch", "Suppe", "Dessert & Backen", "Snack"],
+    recipes: [],
+    plan: {},
+    excludedDays: [],
+    stagingRecipes: [],
+    manualGroceries: [],
+    groceries: [],
+    isShoppingMode: false,
+    allowedRandomCategories: ["Vegetarisch", "Unter 30 Min", "Pasta", "Fleisch", "Suppe"],
+    allowedPlanCategories: ["Vegetarisch", "Unter 30 Min", "Pasta", "Fleisch", "Suppe"]
+  };
 
-    let wakeLockSentinel = null;
-    let timerInterval = null;
-    let timerRemainingSeconds = 0;
-    let isTimerRunning = false;
+  let activeFilter = 'all';
+  let currentDetailRecipe = null;
+  let currentServingsFactor = 1;
+  let currentFormImageData = null;
 
-    // --- PIN AUTHENTIFIZIERUNG ---
-    function checkStoredPin() {
-      const stored = localStorage.getItem("bf_auth_done");
-      if (stored === "true") {
+  let wakeLockSentinel = null;
+  let timerInterval = null;
+  let timerRemainingSeconds = 0;
+  let isTimerRunning = false;
+
+  // --- KRYPTOGRAFISCHE ENTSCHLÜSSELUNG PER PIN ---
+  async function decryptKeyWithPin(pin) {
+    const raw = JSON.parse(atob(ENCRYPTED_KEY_PAYLOAD));
+    const salt = new Uint8Array(raw.salt);
+    const iv = new Uint8Array(raw.iv);
+    const data = new Uint8Array(raw.data);
+
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(pin), "PBKDF2", false, ["deriveKey"]);
+    const key = await crypto.subtle.deriveKey(
+      { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
+      keyMaterial,
+      { name: "AES-GCM", length: 256 },
+      false,
+      ["decrypt"]
+    );
+
+    const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+    return new TextDecoder().decode(decrypted);
+  }
+
+  async function unlockWithPin(e) {
+    if (e) e.preventDefault();
+    const input = document.getElementById('pin-input');
+    const err = document.getElementById('pin-error');
+    const pin = input.value.trim();
+
+    try {
+      // Wenn die PIN falsch ist, wirft Web-Crypto hier automatisch einen Fehler!
+      activeDecryptedKey = await decryptKeyWithPin(pin);
+      localStorage.setItem("bf_stored_pin", pin);
+      document.getElementById('pin-overlay').classList.add('hidden');
+      if (err) err.classList.add('hidden');
+      input.value = "";
+      showToast("Erfolgreich entsperrt!");
+      pullFromCloud();
+    } catch (ex) {
+      if (err) err.classList.remove('hidden');
+      input.value = "";
+      input.focus();
+    }
+  }
+
+  function lockApp() {
+    activeDecryptedKey = null;
+    localStorage.removeItem("bf_stored_pin");
+    document.getElementById('pin-overlay').classList.remove('hidden');
+    updateSyncBadge("offline", "Gesperrt");
+    showToast("App gesperrt.");
+  }
+
+  // --- STARTUP ---
+  window.addEventListener('DOMContentLoaded', async () => {
+    try { loadLocalData(); } catch(e) {}
+    renderAll();
+
+    const savedPin = localStorage.getItem("bf_stored_pin");
+    if (savedPin) {
+      try {
+        activeDecryptedKey = await decryptKeyWithPin(savedPin);
         document.getElementById('pin-overlay').classList.add('hidden');
         pullFromCloud();
-      } else {
-        document.getElementById('pin-overlay').classList.remove('hidden');
-        setTimeout(() => document.getElementById('pin-input').focus(), 150);
+        setInterval(pullFromCloud, 30000);
+        return;
+      } catch (e) {
+        localStorage.removeItem("bf_stored_pin");
       }
     }
-
-    function unlockWithPin(e) {
-      e.preventDefault();
-      const input = document.getElementById('pin-input');
-      const err = document.getElementById('pin-error');
-      const pin = input.value.trim();
-
-      if (pin === HOUSEHOLD_PIN) {
-        localStorage.setItem("bf_auth_done", "true");
-        document.getElementById('pin-overlay').classList.add('hidden');
-        err.classList.add('hidden');
-        input.value = "";
-        showToast("Erfolgreich entsperrt!");
-        pullFromCloud();
-      } else {
-        err.classList.remove('hidden');
-        input.value = "";
-        input.focus();
-      }
-    }
-
-    function lockApp() {
-      localStorage.removeItem("bf_auth_done");
-      document.getElementById('pin-overlay').classList.remove('hidden');
-      updateSyncBadge("offline", "Gesperrt");
-      showToast("App gesperrt.");
-    }
-
+    document.getElementById('pin-overlay').classList.remove('hidden');
+    setTimeout(() => document.getElementById('pin-input').focus(), 150);
+  });
     // --- STARTUP ---
     window.addEventListener('DOMContentLoaded', () => {
       try { loadLocalData(); } catch(e) {}
