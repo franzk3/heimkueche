@@ -455,143 +455,165 @@
   <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-stone-900 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg transition-all opacity-0 pointer-events-none"></div>
 
   <!-- JAVASCRIPT LOGIK -->
-   <script>
-  // ========================================================
-  // ⚙️ KRYPTO-ZUGANGSDATEN:
-  // ========================================================
-  const JSONBIN_ID = "6adb8714ffd5d160538623fd";
-  const ENCRYPTED_KEY_PAYLOAD = "eyJzYWx0IjpbMTY5LDExLDIxOCw5Myw3MCwxMzcsNzYsODMsNCwxMTMsMjI0LDI0NCwxNjcsNTgsMjEwLDMyXSwiaXYiOlsxNDEsMTY0LDIzNiwzOSwxMzIsMjA0LDEzNywyMzUsMTUwLDEyMiwxNDksMV0sImRhdGEiOlsxMjksNiwxMDAsMTMwLDQwLDEzNCw5NSwxNDMsNTQsOCw0MCw5MCwxMDUsMTAyLDM0LDI0MywyNTQsMTQ3LDIxNCwyNDUsMjI3LDE0MywyNTMsMTk1LDk5LDE2MCwxMzksMzEsNDIsMTI1LDgzLDEyMiw5NywyNTIsMTkxLDI5LDE1OCw1NywyMjIsMTUyLDgyLDIzLDE2MiwxMDgsNDEsMTQ0LDE3NSw2MSw2OSwxNzAsMjUxLDE0MywzMSwyNTIsMTI5LDE4MywyMDksMTA2LDIyNywxNzcsMTAwLDI2LDIxLDY1LDEyNiwzMywxOTgsMjM0LDIzMywyMTIsNTMsMTIxLDE5Myw5LDEzMiwzMV19";
-  const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
+ <!-- JAVASCRIPT LOGIK MIT KRYPTO-SCHUTZ -->
+  <script>
+    // ========================================================
+    // ⚙️ KRYPTO-ZUGANGSDATEN:
+    // ========================================================
+    const JSONBIN_ID = "6adb8714ffd5d160538623fd";
+    const ENCRYPTED_KEY_PAYLOAD = "eyJzYWx0IjpbMTY5LDExLDIxOCw5Myw3MCwxMzcsNzYsODMsNCwxMTMsMjI0LDI0NCwxNjcsNTgsMjEwLDMyXSwiaXYiOlsxNDEsMTY0LDIzNiwzOSwxMzIsMjA0LDEzNywyMzUsMTUwLDEyMiwxNDksMV0sImRhdGEiOlsxMjksNiwxMDAsMTMwLDQwLDEzNCw5NSwxNDMsNTQsOCw0MCw5MCwxMDUsMTAyLDM0LDI0MywyNTQsMTQ3LDIxNCwyNDUsMjI3LDE0MywyNTMsMTk1LDk5LDE2MCwxMzksMzEsNDIsMTI1LDgzLDEyMiw5NywyNTIsMTkxLDI5LDE1OCw1NywyMjIsMTUyLDgyLDIzLDE2MiwxMDgsNDEsMTQ0LDE3NSw2MSw2OSwxNzAsMjUxLDE0MywzMSwyNTIsMTI5LDE4MywyMDksMTA2LDIyNywxNzcsMTAwLDI2LDIxLDY1LDEyNiwzMywxOTgsMjM0LDIzMywyMTIsNTMsMTIxLDE5Myw5LDEzMiwzMV19";
+    const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
 
-  let activeDecryptedKey = null; // Liegt nur flüchtig im RAM des Handys
+    let activeDecryptedKey = null; // Liegt nur flüchtig im RAM
 
-  const DAYS = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
+    const DAYS = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
 
-  const UNITS = ["", "g", "kg", "ml", "l", "TL", "EL", "Prise", "Stk", "Zehe(n)", "Dose(n)", "Bund", "Pkg", "Rolle(n)", "Flasche(n)"];
+    const UNITS = ["", "g", "kg", "ml", "l", "TL", "EL", "Prise", "Stk", "Zehe(n)", "Dose(n)", "Bund", "Pkg", "Rolle(n)", "Flasche(n)"];
 
-  const INGREDIENT_EXAMPLES = [
-    { amount: 400, unit: "g", name: "Spaghetti" },
-    { amount: 2, unit: "Zehe(n)", name: "Knoblauch" },
-    { amount: 1, unit: "Dose(n)", name: "gehackte Tomaten" },
-    { amount: 1, unit: "Bund", name: "Basilikum" },
-    { amount: 100, unit: "ml", name: "Sahne" },
-    { amount: 1, unit: "EL", name: "Olivenöl" },
-    { amount: 1, unit: "Prise", name: "Salz & Pfeffer" },
-    { amount: 250, unit: "g", name: "Champignons" }
-  ];
+    const INGREDIENT_EXAMPLES = [
+      { amount: 400, unit: "g", name: "Spaghetti" },
+      { amount: 2, unit: "Zehe(n)", name: "Knoblauch" },
+      { amount: 1, unit: "Dose(n)", name: "gehackte Tomaten" },
+      { amount: 1, unit: "Bund", name: "Basilikum" },
+      { amount: 100, unit: "ml", name: "Sahne" },
+      { amount: 1, unit: "EL", name: "Olivenöl" },
+      { amount: 1, unit: "Prise", name: "Salz & Pfeffer" },
+      { amount: 250, unit: "g", name: "Champignons" }
+    ];
 
-  let state = {
-    categories: ["Vegetarisch", "Unter 30 Min", "Pasta", "Fleisch", "Suppe", "Dessert & Backen", "Snack"],
-    recipes: [],
-    plan: {},
-    excludedDays: [],
-    stagingRecipes: [],
-    manualGroceries: [],
-    groceries: [],
-    isShoppingMode: false,
-    allowedRandomCategories: ["Vegetarisch", "Unter 30 Min", "Pasta", "Fleisch", "Suppe"],
-    allowedPlanCategories: ["Vegetarisch", "Unter 30 Min", "Pasta", "Fleisch", "Suppe"]
-  };
+    let state = {
+      categories: ["Vegetarisch", "Unter 30 Min", "Pasta", "Fleisch", "Suppe", "Dessert & Backen", "Snack"],
+      recipes: [],
+      plan: {},
+      excludedDays: [],
+      stagingRecipes: [],
+      manualGroceries: [],
+      groceries: [],
+      isShoppingMode: false,
+      allowedRandomCategories: ["Vegetarisch", "Unter 30 Min", "Pasta", "Fleisch", "Suppe"],
+      allowedPlanCategories: ["Vegetarisch", "Unter 30 Min", "Pasta", "Fleisch", "Suppe"]
+    };
 
-  let activeFilter = 'all';
-  let currentDetailRecipe = null;
-  let currentServingsFactor = 1;
-  let currentFormImageData = null;
+    let activeFilter = 'all';
+    let currentDetailRecipe = null;
+    let currentServingsFactor = 1;
+    let currentFormImageData = null;
 
-  let wakeLockSentinel = null;
-  let timerInterval = null;
-  let timerRemainingSeconds = 0;
-  let isTimerRunning = false;
+    let wakeLockSentinel = null;
+    let timerInterval = null;
+    let timerRemainingSeconds = 0;
+    let isTimerRunning = false;
 
-  // --- KRYPTOGRAFISCHE ENTSCHLÜSSELUNG PER PIN ---
-  async function decryptKeyWithPin(pin) {
-    const raw = JSON.parse(atob(ENCRYPTED_KEY_PAYLOAD));
-    const salt = new Uint8Array(raw.salt);
-    const iv = new Uint8Array(raw.iv);
-    const data = new Uint8Array(raw.data);
+    // --- KRYPTOGRAFISCHE ENTSCHLÜSSELUNG PER PIN ---
+    async function decryptKeyWithPin(pin) {
+      if (!window.crypto || !window.crypto.subtle) {
+        throw new Error("WebCrypto ist nicht aktiv (benötigt HTTPS)");
+      }
 
-    const enc = new TextEncoder();
-    const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(pin), "PBKDF2", false, ["deriveKey"]);
-    const key = await crypto.subtle.deriveKey(
-      { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
-      keyMaterial,
-      { name: "AES-GCM", length: 256 },
-      false,
-      ["decrypt"]
-    );
+      const raw = JSON.parse(atob(ENCRYPTED_KEY_PAYLOAD));
+      const salt = new Uint8Array(raw.salt);
+      const iv = new Uint8Array(raw.iv);
+      const data = new Uint8Array(raw.data);
 
-    const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
-    return new TextDecoder().decode(decrypted);
-  }
+      const enc = new TextEncoder();
+      const keyMaterial = await crypto.subtle.importKey(
+        "raw",
+        enc.encode(pin),
+        "PBKDF2",
+        false,
+        ["deriveKey"]
+      );
 
-  async function unlockWithPin(e) {
-    if (e) e.preventDefault();
-    const input = document.getElementById('pin-input');
-    const err = document.getElementById('pin-error');
-    const pin = input.value.trim();
+      const key = await crypto.subtle.deriveKey(
+        { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["decrypt"]
+      );
 
-    try {
-      // Wenn die PIN falsch ist, wirft Web-Crypto hier automatisch einen Fehler!
-      activeDecryptedKey = await decryptKeyWithPin(pin);
-      localStorage.setItem("bf_stored_pin", pin);
-      document.getElementById('pin-overlay').classList.add('hidden');
-      if (err) err.classList.add('hidden');
-      input.value = "";
-      showToast("Erfolgreich entsperrt!");
-      pullFromCloud();
-    } catch (ex) {
-      if (err) err.classList.remove('hidden');
-      input.value = "";
-      input.focus();
+      const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+      return new TextDecoder().decode(decrypted);
     }
-  }
 
-  function lockApp() {
-    activeDecryptedKey = null;
-    localStorage.removeItem("bf_stored_pin");
-    document.getElementById('pin-overlay').classList.remove('hidden');
-    updateSyncBadge("offline", "Gesperrt");
-    showToast("App gesperrt.");
-  }
+    async function unlockWithPin(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
 
-  // --- STARTUP ---
-  window.addEventListener('DOMContentLoaded', async () => {
-    try { loadLocalData(); } catch(e) {}
-    renderAll();
+      const input = document.getElementById('pin-input');
+      const err = document.getElementById('pin-error');
+      const pin = (input ? input.value : "").trim();
 
-    const savedPin = localStorage.getItem("bf_stored_pin");
-    if (savedPin) {
+      if (!pin) return;
+
       try {
-        activeDecryptedKey = await decryptKeyWithPin(savedPin);
-        document.getElementById('pin-overlay').classList.add('hidden');
+        activeDecryptedKey = await decryptKeyWithPin(pin);
+        localStorage.setItem("bf_stored_pin", pin);
+
+        const overlay = document.getElementById('pin-overlay');
+        if (overlay) overlay.classList.add('hidden');
+        if (err) err.classList.add('hidden');
+
+        input.value = "";
+        showToast("Erfolgreich entsperrt!");
         pullFromCloud();
-        setInterval(pullFromCloud, 30000);
-        return;
-      } catch (e) {
-        localStorage.removeItem("bf_stored_pin");
+      } catch (ex) {
+        console.error("Entschlüsselungsfehler:", ex);
+        if (err) {
+          err.innerText = ex.message.includes("WebCrypto")
+            ? "Fehler: Seite muss über HTTPS laufen!"
+            : "Falsche PIN. Bitte erneut versuchen.";
+          err.classList.remove('hidden');
+        }
+        input.value = "";
+        input.focus();
       }
     }
-    document.getElementById('pin-overlay').classList.remove('hidden');
-    setTimeout(() => document.getElementById('pin-input').focus(), 150);
-  });
+
+    function lockApp() {
+      activeDecryptedKey = null;
+      localStorage.removeItem("bf_stored_pin");
+      document.getElementById('pin-overlay').classList.remove('hidden');
+      updateSyncBadge("offline", "Gesperrt");
+      showToast("App gesperrt.");
+    }
+
     // --- STARTUP ---
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', async () => {
       try { loadLocalData(); } catch(e) {}
       renderAll();
-      checkStoredPin();
-      setInterval(pullFromCloud, 30000);
+
+      const savedPin = localStorage.getItem("bf_stored_pin");
+      if (savedPin) {
+        try {
+          activeDecryptedKey = await decryptKeyWithPin(savedPin);
+          document.getElementById('pin-overlay').classList.add('hidden');
+          pullFromCloud();
+          setInterval(pullFromCloud, 30000);
+          return;
+        } catch (e) {
+          localStorage.removeItem("bf_stored_pin");
+        }
+      }
+      document.getElementById('pin-overlay').classList.remove('hidden');
+      setTimeout(() => {
+        const inp = document.getElementById('pin-input');
+        if (inp) inp.focus();
+      }, 150);
     });
 
-    // --- SYNC ENGINE ---
+    // --- SYNC ENGINE (NUTZT DEN ENTSCHLÜSSELTEN KEY) ---
     async function pullFromCloud() {
-      if (!JSONBIN_ID || JSONBIN_ID === "DEINE_BIN_ID_HIER" || !JSONBIN_KEY || JSONBIN_KEY === "DEIN_ACCESS_KEY_HIER") return;
+      if (!activeDecryptedKey || !JSONBIN_ID) return;
       try {
         const res = await fetch(`${JSONBIN_URL}/latest`, {
-          headers: { "X-Access-Key": JSONBIN_KEY }
+          headers: { "X-Access-Key": activeDecryptedKey }
         });
         if (!res.ok) throw new Error("Status " + res.status);
         const data = await res.json();
-        
+
         if (data.record) {
           if (Array.isArray(data.record.recipes) && data.record.recipes.length > 0) state.recipes = data.record.recipes;
           if (Array.isArray(data.record.categories) && data.record.categories.length > 0) state.categories = data.record.categories;
@@ -617,15 +639,15 @@
 
     async function pushToCloud() {
       saveLocalData();
-      if (!JSONBIN_ID || JSONBIN_ID === "DEINE_BIN_ID_HIER" || !JSONBIN_KEY || JSONBIN_KEY === "DEIN_ACCESS_KEY_HIER") return;
+      if (!activeDecryptedKey || !JSONBIN_ID) return;
 
       updateSyncBadge("loading", "Speichere...");
       try {
         const res = await fetch(JSONBIN_URL, {
           method: "PUT",
-          headers: { 
-            "Content-Type": "application/json", 
-            "X-Access-Key": JSONBIN_KEY 
+          headers: {
+            "Content-Type": "application/json",
+            "X-Access-Key": activeDecryptedKey
           },
           body: JSON.stringify(state)
         });
@@ -636,6 +658,10 @@
     }
 
     function manualSync() {
+      if (!activeDecryptedKey) {
+        showToast("Bitte erst entsperren!");
+        return;
+      }
       showToast("Synchronisiere...");
       pullFromCloud();
     }
@@ -643,16 +669,16 @@
     function updateSyncBadge(status, text) {
       const dot = document.getElementById('sync-dot');
       const label = document.getElementById('sync-text');
-      label.innerText = text;
-      dot.className = "w-2 h-2 rounded-full " + (status === 'online' ? "bg-emerald-500 animate-pulse" : (status === 'loading' ? "bg-amber-400" : "bg-stone-400"));
+      if (label) label.innerText = text;
+      if (dot) dot.className = "w-2 h-2 rounded-full " + (status === 'online' ? "bg-emerald-500 animate-pulse" : (status === 'loading' ? "bg-amber-400" : "bg-stone-400"));
     }
 
     // --- LOKALE DATEN & DEFAULTS ---
     function loadLocalData() {
       const stored = localStorage.getItem("heimkueche_data_v16");
       if (stored) {
-        try { 
-          state = Object.assign(state, JSON.parse(stored)); 
+        try {
+          state = Object.assign(state, JSON.parse(stored));
           return;
         } catch(e){}
       }
@@ -750,13 +776,16 @@
       });
       document.getElementById(`tab-${tabId}`).classList.add('active');
       const activeBtn = document.getElementById(`nav-btn-${tabId}`);
-      activeBtn.classList.remove('text-stone-400');
-      activeBtn.classList.add('text-brand-600');
+      if (activeBtn) {
+        activeBtn.classList.remove('text-stone-400');
+        activeBtn.classList.add('text-brand-600');
+      }
     }
 
     // --- KATEGORIEN ---
     function renderCategoryFilters() {
       const bar = document.getElementById('category-filter-bar');
+      if (!bar) return;
       bar.innerHTML = `
         <button onclick="setFilter('all')" class="cat-pill px-3 py-1.5 rounded-full ${activeFilter === 'all' ? 'bg-brand-600 text-white font-medium' : 'bg-white text-stone-600 border border-stone-200'}">Alle</button>
       `;
@@ -785,6 +814,7 @@
 
     function openCategoryModal() {
       const list = document.getElementById('category-manage-list');
+      if (!list) return;
       list.innerHTML = "";
       state.categories.forEach((cat, idx) => {
         const row = document.createElement('div');
@@ -832,6 +862,7 @@
 
     function renderCategoryCheckboxes(selectedTags = []) {
       const container = document.getElementById('form-category-checkboxes');
+      if (!container) return;
       container.innerHTML = "";
       state.categories.forEach(cat => {
         const isChecked = selectedTags.some(t => t.toLowerCase() === cat.toLowerCase());
@@ -926,6 +957,7 @@
     // --- FORMULAR ZEILEN ---
     function addIngredientRow(amount = "", unit = "", name = "") {
       const container = document.getElementById('form-ingredients-rows');
+      if (!container) return;
       const rowIndex = container.children.length;
       const example = INGREDIENT_EXAMPLES[rowIndex % INGREDIENT_EXAMPLES.length];
 
@@ -965,6 +997,7 @@
 
     function addStepRow(text = "") {
       const container = document.getElementById('form-steps-rows');
+      if (!container) return;
       const stepNumber = container.children.length + 1;
 
       const row = document.createElement('div');
@@ -987,13 +1020,15 @@
     // --- REZEPTE RENDERN ---
     function renderRecipes() {
       const list = document.getElementById('recipe-list');
-      const query = document.getElementById('search-input').value.toLowerCase();
+      const searchInput = document.getElementById('search-input');
+      if (!list) return;
+      const query = (searchInput ? searchInput.value : "").toLowerCase();
       list.innerHTML = "";
 
       const filtered = state.recipes.filter(r => {
-        const matchesQuery = r.title.toLowerCase().includes(query) || 
-                             r.ingredients.some(i => (typeof i === 'string' ? i : i.name).toLowerCase().includes(query));
-        
+        const matchesQuery = r.title.toLowerCase().includes(query) ||
+                             (r.ingredients && r.ingredients.some(i => (typeof i === 'string' ? i : i.name).toLowerCase().includes(query)));
+
         let matchesCat = true;
         if (activeFilter !== 'all') {
           if (activeFilter === 'Unter 30 Min') matchesCat = r.time <= 30;
@@ -1013,8 +1048,8 @@
         card.onclick = () => openDetailModal(r.id);
         card.innerHTML = `
           <div class="flex items-center gap-3.5">
-            ${r.image ? 
-              `<img src="${r.image}" class="w-12 h-12 rounded-xl object-cover border border-stone-200">` : 
+            ${r.image ?
+              `<img src="${r.image}" class="w-12 h-12 rounded-xl object-cover border border-stone-200">` :
               `<span class="text-3xl p-2 rounded-xl bg-stone-50 border border-stone-100">${r.emoji || '🍲'}</span>`
             }
             <div>
@@ -1079,6 +1114,7 @@
 
     function renderIngredientsList() {
       const ul = document.getElementById('detail-ingredients');
+      if (!ul) return;
       ul.innerHTML = "";
       currentDetailRecipe.ingredients.forEach((ing, idx) => {
         let text = "";
@@ -1294,14 +1330,14 @@
       }
 
       resDiv.innerHTML = `<span class="animate-spin text-2xl">🎲</span>`;
-      
+
       setTimeout(() => {
         const rand = eligibleRecipes[Math.floor(Math.random() * eligibleRecipes.length)];
         resDiv.innerHTML = `
           <div class="text-left w-full cursor-pointer" onclick="openDetailModal('${rand.id}')">
             <div class="flex items-center gap-2 mb-1">
-              ${rand.image ? 
-                `<img src="${rand.image}" class="w-8 h-8 rounded-lg object-cover border border-stone-200">` : 
+              ${rand.image ?
+                `<img src="${rand.image}" class="w-8 h-8 rounded-lg object-cover border border-stone-200">` :
                 `<span class="text-2xl">${rand.emoji}</span>`
               }
               <span class="font-bold text-stone-900">${rand.title}</span>
@@ -1315,10 +1351,11 @@
     // --- WOCHENPLANER ---
     function renderPlan() {
       const grid = document.getElementById('week-grid');
+      if (!grid) return;
       grid.innerHTML = "";
 
       const allowedCats = (state.allowedPlanCategories || []).map(c => c.toLowerCase());
-      
+
       const selectableRecipes = state.recipes.filter(r => {
         if (allowedCats.length === 0) return true;
         if (!r.tags || r.tags.length === 0) return true;
@@ -1332,7 +1369,7 @@
 
         const row = document.createElement('div');
         row.className = `p-3 rounded-xl border transition-all ${isExcluded ? 'bg-stone-100/70 border-stone-200/50 opacity-60' : 'bg-white border-stone-200/80 shadow-sm'}`;
-        
+
         row.innerHTML = `
           <div class="flex items-center justify-between gap-2 w-full min-w-0">
             <div class="flex items-center gap-2 flex-shrink-0 w-24">
@@ -1505,7 +1542,7 @@
       const cleanName = name.trim().toLowerCase();
       const cleanUnit = (unit || "").trim().toLowerCase();
 
-      const existing = state.groceries.find(g => 
+      const existing = state.groceries.find(g =>
         (g.unit || "").trim().toLowerCase() === cleanUnit &&
         areSimilarWords(g.name, cleanName)
       );
@@ -1677,71 +1714,80 @@
       const inShopping = state.isShoppingMode === true;
 
       if (!inShopping) {
-        stagingView.classList.remove('hidden');
-        shoppingView.classList.add('hidden');
-        btnClear.classList.add('hidden');
+        if (stagingView) stagingView.classList.remove('hidden');
+        if (shoppingView) shoppingView.classList.add('hidden');
+        if (btnClear) btnClear.classList.add('hidden');
 
-        if (state.groceries.length > 0 || state.manualGroceries.length > 0) {
-          btnBack.innerText = "Zur Einkaufsliste →";
-          btnBack.onclick = consolidateGroceriesForShopping;
-          btnBack.classList.remove('hidden');
-        } else {
-          btnBack.classList.add('hidden');
+        if (btnBack) {
+          if (state.groceries.length > 0 || state.manualGroceries.length > 0) {
+            btnBack.innerText = "Zur Einkaufsliste →";
+            btnBack.onclick = consolidateGroceriesForShopping;
+            btnBack.classList.remove('hidden');
+          } else {
+            btnBack.classList.add('hidden');
+          }
         }
 
         const container = document.getElementById('staging-recipes-container');
-        container.innerHTML = "";
+        if (container) {
+          container.innerHTML = "";
 
-        if (state.stagingRecipes.length === 0) {
-          container.innerHTML = `<div class="text-center py-8 text-stone-400 text-xs bg-white rounded-2xl border border-stone-200">Noch keine Rezepte für den Einkauf vorgemerkt.</div>`;
-          document.getElementById('btn-go-shopping').classList.add('hidden');
-        } else {
-          document.getElementById('btn-go-shopping').classList.remove('hidden');
+          if (state.stagingRecipes.length === 0) {
+            container.innerHTML = `<div class="text-center py-8 text-stone-400 text-xs bg-white rounded-2xl border border-stone-200">Noch keine Rezepte für den Einkauf vorgemerkt.</div>`;
+            const goBtn = document.getElementById('btn-go-shopping');
+            if (goBtn) goBtn.classList.add('hidden');
+          } else {
+            const goBtn = document.getElementById('btn-go-shopping');
+            if (goBtn) goBtn.classList.remove('hidden');
 
-          state.stagingRecipes.forEach(group => {
-            const card = document.createElement('div');
-            card.className = "bg-white rounded-2xl border border-stone-200 p-4 shadow-sm space-y-3";
-            
-            const itemsHtml = (group.items || []).map((item, idx) => {
-              const amtStr = item.amount ? `${item.amount} ` : "";
-              const unitStr = item.unit ? `${item.unit} ` : "";
-              return `
-                <li class="flex items-center justify-between text-xs text-stone-700 bg-stone-50 px-2.5 py-1.5 rounded-lg">
-                  <span>${amtStr}${unitStr}${item.name}</span>
-                  <button type="button" onclick="removeStagingItem('${group.id}', ${idx})" class="text-stone-300 hover:text-red-500 font-bold ml-2 text-base leading-none">&times;</button>
-                </li>
-              `;
-            }).join('');
+            state.stagingRecipes.forEach(group => {
+              const card = document.createElement('div');
+              card.className = "bg-white rounded-2xl border border-stone-200 p-4 shadow-sm space-y-3";
 
-            card.innerHTML = `
-              <div class="flex items-center justify-between border-b border-stone-100 pb-2">
-                <div class="flex items-center gap-2">
-                  <span class="text-xl">${group.emoji || '🍲'}</span>
-                  <div>
-                    <h4 class="font-bold text-xs text-stone-900">${group.title}</h4>
-                    <span class="text-[10px] text-stone-400">${group.servings} Portionen</span>
+              const itemsHtml = (group.items || []).map((item, idx) => {
+                const amtStr = item.amount ? `${item.amount} ` : "";
+                const unitStr = item.unit ? `${item.unit} ` : "";
+                return `
+                  <li class="flex items-center justify-between text-xs text-stone-700 bg-stone-50 px-2.5 py-1.5 rounded-lg">
+                    <span>${amtStr}${unitStr}${item.name}</span>
+                    <button type="button" onclick="removeStagingItem('${group.id}', ${idx})" class="text-stone-300 hover:text-red-500 font-bold ml-2 text-base leading-none">&times;</button>
+                  </li>
+                `;
+              }).join('');
+
+              card.innerHTML = `
+                <div class="flex items-center justify-between border-b border-stone-100 pb-2">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xl">${group.emoji || '🍲'}</span>
+                    <div>
+                      <h4 class="font-bold text-xs text-stone-900">${group.title}</h4>
+                      <span class="text-[10px] text-stone-400">${group.servings} Portionen</span>
+                    </div>
                   </div>
+                  <button type="button" onclick="removeStagingRecipe('${group.id}')" class="text-xs bg-red-50 text-red-600 font-semibold px-2 py-1 rounded-lg active:scale-95">
+                    Rezept entfernen
+                  </button>
                 </div>
-                <button type="button" onclick="removeStagingRecipe('${group.id}')" class="text-xs bg-red-50 text-red-600 font-semibold px-2 py-1 rounded-lg active:scale-95">
-                  Rezept entfernen
-                </button>
-              </div>
-              <ul class="space-y-1">${itemsHtml}</ul>
-            `;
-            container.appendChild(card);
-          });
+                <ul class="space-y-1">${itemsHtml}</ul>
+              `;
+              container.appendChild(card);
+            });
+          }
         }
 
       } else {
-        stagingView.classList.add('hidden');
-        shoppingView.classList.remove('hidden');
-        btnClear.classList.remove('hidden');
+        if (stagingView) stagingView.classList.add('hidden');
+        if (shoppingView) shoppingView.classList.remove('hidden');
+        if (btnClear) btnClear.classList.remove('hidden');
 
-        btnBack.innerText = "← Zurück zur Übersicht";
-        btnBack.onclick = backToStaging;
-        btnBack.classList.remove('hidden');
+        if (btnBack) {
+          btnBack.innerText = "← Zurück zur Übersicht";
+          btnBack.onclick = backToStaging;
+          btnBack.classList.remove('hidden');
+        }
 
         const list = document.getElementById('grocery-list');
+        if (!list) return;
         list.innerHTML = "";
 
         if (state.groceries.length === 0) {
@@ -1752,7 +1798,7 @@
         state.groceries.forEach(item => {
           const div = document.createElement('div');
           div.className = "bg-white p-3 rounded-xl border border-stone-200 flex items-center justify-between";
-          
+
           let labelText = item.name;
           if (item.amount || item.unit) {
             labelText = `${item.amount || ''} ${item.unit || ''} ${item.name}`.trim();
@@ -1842,30 +1888,34 @@
       document.getElementById('cook-servings').innerText = Math.round((currentDetailRecipe.servings || 4) * currentServingsFactor);
 
       const ingUl = document.getElementById('cook-ingredients-list');
-      ingUl.innerHTML = "";
-      currentDetailRecipe.ingredients.forEach(ing => {
-        let text = "";
-        if (typeof ing === 'string') text = ing;
-        else {
-          const amt = ing.amount ? (Math.round((ing.amount * currentServingsFactor) * 10) / 10) : "";
-          text = `${amt} ${ing.unit || ''} ${ing.name}`.trim();
-        }
-        ingUl.innerHTML += `<li class="flex items-center gap-2"><span>•</span> <span>${text}</span></li>`;
-      });
+      if (ingUl) {
+        ingUl.innerHTML = "";
+        currentDetailRecipe.ingredients.forEach(ing => {
+          let text = "";
+          if (typeof ing === 'string') text = ing;
+          else {
+            const amt = ing.amount ? (Math.round((ing.amount * currentServingsFactor) * 10) / 10) : "";
+            text = `${amt} ${ing.unit || ''} ${ing.name}`.trim();
+          }
+          ingUl.innerHTML += `<li class="flex items-center gap-2"><span>•</span> <span>${text}</span></li>`;
+        });
+      }
 
       const stepsDiv = document.getElementById('cook-steps-list');
-      const stepsData = Array.isArray(currentDetailRecipe.steps) ? currentDetailRecipe.steps : (currentDetailRecipe.steps || "").split('\n').filter(s => s.trim());
-      stepsDiv.innerHTML = stepsData.map((step, idx) => `
-        <label class="block p-4 rounded-2xl bg-stone-800/80 border border-stone-700/80 active:bg-stone-750 transition-all cursor-pointer">
-          <div class="flex items-start gap-3.5">
-            <input type="checkbox" onchange="this.closest('label').classList.toggle('opacity-40', this.checked)" class="mt-1 rounded border-stone-600 bg-stone-700 text-brand-500 w-5 h-5 focus:ring-0">
-            <div>
-              <span class="text-xs font-bold text-brand-400 block mb-1">SCHRITT ${idx + 1}</span>
-              <p class="text-base text-stone-100 leading-relaxed">${step.replace(/^\d+[\.\)]\s*/, '')}</p>
+      if (stepsDiv) {
+        const stepsData = Array.isArray(currentDetailRecipe.steps) ? currentDetailRecipe.steps : (currentDetailRecipe.steps || "").split('\n').filter(s => s.trim());
+        stepsDiv.innerHTML = stepsData.map((step, idx) => `
+          <label class="block p-4 rounded-2xl bg-stone-800/80 border border-stone-700/80 active:bg-stone-750 transition-all cursor-pointer">
+            <div class="flex items-start gap-3.5">
+              <input type="checkbox" onchange="this.closest('label').classList.toggle('opacity-40', this.checked)" class="mt-1 rounded border-stone-600 bg-stone-700 text-brand-500 w-5 h-5 focus:ring-0">
+              <div>
+                <span class="text-xs font-bold text-brand-400 block mb-1">SCHRITT ${idx + 1}</span>
+                <p class="text-base text-stone-100 leading-relaxed">${step.replace(/^\d+[\.\)]\s*/, '')}</p>
+              </div>
             </div>
-          </div>
-        </label>
-      `).join('');
+          </label>
+        `).join('');
+      }
 
       try {
         if ('wakeLock' in navigator) {
@@ -1970,6 +2020,7 @@
 
     function showToast(text) {
       const toast = document.getElementById('toast');
+      if (!toast) return;
       toast.innerText = text;
       toast.classList.remove('opacity-0');
       setTimeout(() => toast.classList.add('opacity-0'), 2500);
