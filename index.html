@@ -1287,7 +1287,7 @@
     }
 
     // --- WOCHENPLANER ---
-    function renderPlan() {
+  function renderPlan() {
       const grid = document.getElementById('week-grid');
       if (!grid) return;
       grid.innerHTML = "";
@@ -1309,29 +1309,32 @@
         row.className = `p-3 rounded-xl border transition-all ${isExcluded ? 'bg-stone-100/70 border-stone-200/50 opacity-60' : 'bg-white border-stone-200/80 shadow-sm'}`;
 
         row.innerHTML = `
-          <div class="flex items-center justify-between gap-2 w-full min-w-0">
-            <div class="flex items-center gap-2 flex-shrink-0 w-24">
+          <div class="flex items-center justify-between gap-2.5 w-full min-w-0">
+            <!-- Wochentag & Checkbox: Kompakt, aber deutlich lesbar -->
+            <div class="flex items-center gap-1.5 flex-shrink-0">
               <input type="checkbox" title="Tag einbeziehen/ausschließen" ${!isExcluded ? 'checked' : ''} 
                      onchange="toggleExcludeDay('${day}')" 
                      class="rounded text-brand-600 focus:ring-0 w-3.5 h-3.5">
-              <span class="text-xs font-bold ${isExcluded ? 'text-stone-400 line-through' : 'text-stone-700'}">${day.slice(0, 2)}.</span>
+              <span class="text-xs font-bold ${isExcluded ? 'text-stone-400 line-through' : 'text-stone-700'} w-7">${day.slice(0, 2)}</span>
             </div>
 
+            <!-- Rezeptname: Darf 2 Zeilen einnehmen, Text bricht normal um statt abgeschnitten zu werden -->
             <div class="flex-1 min-w-0 px-1">
               ${isExcluded ? 
-                `<span class="text-xs text-stone-400 italic block truncate">Ausgeschlossen</span>` : 
+                `<span class="text-xs text-stone-400 italic">Ausgeschlossen</span>` : 
                 (recipe ? `
-                  <div onclick="openDetailModal('${recipe.id}')" class="flex items-center gap-1.5 cursor-pointer font-semibold text-xs text-stone-900 min-w-0">
-                    <span class="flex-shrink-0">${recipe.image ? `<img src="${recipe.image}" class="w-4 h-4 rounded object-cover">` : (recipe.emoji || '🍲')}</span>
-                    <span class="truncate block">${recipe.title}</span>
+                  <div onclick="openDetailModal('${recipe.id}')" class="flex items-start gap-1.5 cursor-pointer font-semibold text-xs text-stone-900 min-w-0 leading-tight">
+                    <span class="flex-shrink-0 mt-0.5">${recipe.image ? `<img src="${recipe.image}" class="w-4 h-4 rounded object-cover">` : (recipe.emoji || '🍲')}</span>
+                    <span class="break-words line-clamp-2">${recipe.title}</span>
                   </div>
-                ` : `<span class="text-xs text-stone-300 italic block truncate">Leer</span>`)
+                ` : `<span class="text-xs text-stone-300 italic">Noch nichts gewählt</span>`)
               }
             </div>
 
+            <!-- Menü-Button: Schmal & fest verankert -->
             ${!isExcluded ? `
               <div class="flex-shrink-0">
-                <select onchange="assignDayPlan('${day}', this.value)" class="bg-stone-50 border border-stone-200 text-xs font-semibold rounded-lg px-2 py-1.5 text-stone-600 focus:outline-none w-[84px] cursor-pointer text-center">
+                <select onchange="assignDayPlan('${day}', this.value)" class="bg-stone-50 border border-stone-200 text-xs font-semibold rounded-lg px-2 py-1.5 text-stone-600 focus:outline-none w-[78px] cursor-pointer text-center">
                   <option value="" disabled selected hidden>${recipe ? 'Ändern ▾' : 'Wählen ▾'}</option>
                   ${recipe ? `<option value="__REMOVE__" class="text-red-500">✕ (Löschen)</option>` : ''}
                   ${selectableRecipes.map(r => `<option value="${r.id}">${r.emoji} ${r.title}</option>`).join('')}
