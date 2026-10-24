@@ -1322,7 +1322,7 @@
     }
 
     // --- WOCHENPLANER ---
-    function renderPlan() {
+  function renderPlan() {
       const grid = document.getElementById('week-grid');
       grid.innerHTML = "";
 
@@ -1333,6 +1333,53 @@
         if (!r.tags || r.tags.length === 0) return true;
         return r.tags.some(t => allowedCats.includes(t.toLowerCase()));
       });
+
+      DAYS.forEach(day => {
+        const isExcluded = state.excludedDays.includes(day);
+        const recipeId = state.plan[day];
+        const recipe = state.recipes.find(r => r.id === recipeId);
+
+        const row = document.createElement('div');
+        row.className = `p-3 rounded-xl border transition-all ${isExcluded ? 'bg-stone-100/70 border-stone-200/50 opacity-60' : 'bg-white border-stone-200/80 shadow-sm'}`;
+        
+        row.innerHTML = `
+          <div class="flex items-center justify-between gap-2 w-full min-w-0">
+            <!-- Wochentag & Checkbox: Feste minimale Breite, schrumpft nicht -->
+            <div class="flex items-center gap-2 flex-shrink-0 w-24">
+              <input type="checkbox" title="Tag einbeziehen/ausschließen" ${!isExcluded ? 'checked' : ''} 
+                     onchange="toggleExcludeDay('${day}')" 
+                     class="rounded text-brand-600 focus:ring-0 w-3.5 h-3.5">
+              <span class="text-xs font-bold ${isExcluded ? 'text-stone-400 line-through' : 'text-stone-700'}">${day.slice(0, 2)}.</span>
+            </div>
+
+            <!-- Rezeptname: min-w-0 und truncate zwingen den Text zum Kürzen mit '...' -->
+            <div class="flex-1 min-w-0 px-1">
+              ${isExcluded ? 
+                `<span class="text-xs text-stone-400 italic block truncate">Ausgeschlossen</span>` : 
+                (recipe ? `
+                  <div onclick="openDetailModal('${recipe.id}')" class="flex items-center gap-1.5 cursor-pointer font-semibold text-xs text-stone-900 min-w-0">
+                    <span class="flex-shrink-0">${recipe.image ? `<img src="${recipe.image}" class="w-4 h-4 rounded object-cover">` : (recipe.emoji || '🍲')}</span>
+                    <span class="truncate block">${recipe.title}</span>
+                  </div>
+                ` : `<span class="text-xs text-stone-300 italic block truncate">Leer</span>`)
+              }
+            </div>
+
+            <!-- Menü: flex-shrink-0 garantiert, dass das Menü immer vollständig sichtbar bleibt -->
+            ${!isExcluded ? `
+              <div class="flex-shrink-0">
+                <select onchange="assignDayPlan('${day}', this.value)" class="bg-stone-50 border border-stone-200 text-xs font-semibold rounded-lg px-2 py-1.5 text-stone-600 focus:outline-none w-[84px] cursor-pointer text-center">
+                  <option value="" disabled selected hidden>${recipe ? 'Ändern ▾' : 'Wählen ▾'}</option>
+                  ${recipe ? `<option value="__REMOVE__" class="text-red-500">✕ (Löschen)</option>` : ''}
+                  ${selectableRecipes.map(r => `<option value="${r.id}">${r.emoji} ${r.title}</option>`).join('')}
+                </select>
+              </div>
+            ` : ''}
+          </div>
+        `;
+        grid.appendChild(row);
+      });
+    }
 
       DAYS.forEach(day => {
         const isExcluded = state.excludedDays.includes(day);
